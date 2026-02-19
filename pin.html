@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EASY-PAY - Connexion & Récupération</title>
+    <style>
+        :root { --wave-blue: #4c4dfc; --text-dark: #2c3e50; --danger: #eb4d4b; --success: #2ecc71; }
+        body { margin: 0; font-family: 'Segoe UI', sans-serif; background: #f0f2f5; display: flex; justify-content: center; align-items: center; height: 100vh; text-align: center; overflow: hidden; }
+        
+        /* Box blanc principal */
+        .container { 
+            width: 90%; max-width: 380px; height: 620px; 
+            background: white; border-radius: 30px; 
+            box-shadow: 0 20px 50px rgba(0,0,0,0.1); 
+            display: flex; flex-direction: column; justify-content: center; align-items: center; 
+            position: relative; overflow: hidden; 
+        }
+        
+        .step { display: none; width: 100%; flex-direction: column; align-items: center; animation: fadeIn 0.3s ease-in-out; }
+        .step.active { display: flex; }
+
+        /* Style des points PIN */
+        .dot-container { display: flex; justify-content: center; margin: 25px 0; }
+        .dot { width: 14px; height: 14px; border: 2px solid #eee; border-radius: 50%; margin: 0 8px; transition: 0.2s; }
+        .dot.active { background: var(--wave-blue); border-color: var(--wave-blue); transform: scale(1.2); }
+        
+        /* Pavé numérique */
+        .numpad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; max-width: 250px; margin: 0 auto; }
+        .btn-num { width: 70px; height: 70px; border-radius: 50%; border: none; background: #f8f9fa; font-size: 24px; font-weight: bold; cursor: pointer; transition: 0.2s; }
+        .btn-num:active { background: #eee; transform: scale(0.95); }
+
+        /* Formulaires */
+        input { width: 85%; padding: 15px; border: 2px solid #eee; border-radius: 12px; margin-bottom: 15px; font-size: 16px; outline: none; text-align: center; }
+        .btn-action { width: 85%; padding: 16px; background: var(--wave-blue); color: white; border: none; border-radius: 16px; font-weight: bold; cursor: pointer; font-size: 16px; transition: 0.2s; }
+        .btn-action:active { transform: scale(0.98); }
+        
+        /* MESSAGE DANS LE BOX BLANC (Remplace le bandeau noir) */
+        #app-message { 
+            position: absolute; bottom: -80px; left: 20px; right: 20px; 
+            padding: 15px; border-radius: 15px; color: white; font-weight: 600; 
+            font-size: 13px; transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); z-index: 1000; 
+        }
+        #app-message.show { bottom: 20px; }
+
+        .link { color: #999; cursor: pointer; margin-top: 25px; font-size: 14px; font-weight: 600; text-decoration: none; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div id="app-message"></div>
+
+        <div id="step-login" class="step active">
+            <h2 style="color: var(--text-dark);">Entrez votre PIN</h2>
+            <div class="dot-container">
+                <div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div>
+            </div>
+            <div class="numpad">
+                <button class="btn-num" onclick="press(1)">1</button><button class="btn-num" onclick="press(2)">2</button><button class="btn-num" onclick="press(3)">3</button>
+                <button class="btn-num" onclick="press(4)">4</button><button class="btn-num" onclick="press(5)">5</button><button class="btn-num" onclick="press(6)">6</button>
+                <button class="btn-num" onclick="press(7)">7</button><button class="btn-num" onclick="press(8)">8</button><button class="btn-num" onclick="press(9)">9</button>
+                <button class="btn-num" style="background:none; color:var(--danger)" onclick="location.href='index.html'">✕</button>
+                <button class="btn-num" onclick="press(0)">0</button>
+                <button class="btn-num" style="background:none;" onclick="del()">←</button>
+            </div>
+            <p class="link" onclick="showStep('step-verify-phone')">PIN oublié ?</p>
+        </div>
+
+        <div id="step-verify-phone" class="step">
+            <h2>Récupération</h2>
+            <p style="color:#666; font-size: 14px; margin-bottom: 20px;">Saisissez le numéro utilisé lors de l'inscription</p>
+            <input type="tel" id="input-phone" placeholder="Numéro de téléphone">
+            <button class="btn-action" onclick="checkPhone()">Suivant</button>
+            <p class="link" onclick="showStep('step-login')">Retour</p>
+        </div>
+
+        <div id="step-new-pin" class="step">
+            <h2>Nouveau PIN</h2>
+            <p style="color:#666; font-size: 14px; margin-bottom: 20px;">Choisissez un nouveau code secret</p>
+            <input type="password" id="new-pin" maxlength="4" placeholder="Nouveau PIN" style="letter-spacing:10px">
+            <input type="password" id="confirm-pin" maxlength="4" placeholder="Confirmer le PIN" style="letter-spacing:10px">
+            <button class="btn-action" onclick="resetPin()">Mettre à jour</button>
+        </div>
+    </div>
+
+    <script>
+        let currentPin = "";
+
+        // Fonction pour afficher les messages DANS le box blanc
+        function showInternalMsg(text, type = 'danger') {
+            const msgBox = document.getElementById('app-message');
+            msgBox.innerText = text;
+            msgBox.style.background = type === 'success' ? '#2ecc71' : '#eb4d4b';
+            msgBox.classList.add('show');
+            setTimeout(() => msgBox.classList.remove('show'), 3000);
+        }
+
+        function showStep(id) {
+            document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+            currentPin = "";
+            updateDots();
+        }
+
+        function press(n) {
+            if(currentPin.length < 4) {
+                currentPin += n;
+                updateDots();
+            }
+            if(currentPin.length === 4) {
+                const savedPin = localStorage.getItem('wave_pin');
+                if(currentPin === savedPin) {
+                    sessionStorage.setItem('is_auth', 'true');
+                    window.location.href = "accueil.html";
+                } else {
+                    showInternalMsg("Code PIN incorrect");
+                    currentPin = "";
+                    setTimeout(updateDots, 300);
+                }
+            }
+        }
+
+        function del() { currentPin = currentPin.slice(0, -1); updateDots(); }
+
+        function updateDots() {
+            const dots = document.querySelectorAll('.dot');
+            dots.forEach((dot, i) => dot.classList.toggle('active', i < currentPin.length));
+        }
+
+        function checkPhone() {
+            const typedPhone = document.getElementById('input-phone').value;
+            const savedPhone = localStorage.getItem('wave_phone');
+            if(typedPhone === savedPhone && typedPhone !== "") {
+                showStep('step-new-pin');
+            } else {
+                showInternalMsg("Numéro de téléphone inconnu");
+            }
+        }
+
+        function resetPin() {
+            const p1 = document.getElementById('new-pin').value;
+            const p2 = document.getElementById('confirm-pin').value;
+            if(p1.length === 4 && p1 === p2) {
+                localStorage.setItem('wave_pin', p1);
+                showInternalMsg("PIN réinitialisé avec succès !", "success");
+                setTimeout(() => showStep('step-login'), 2000);
+            } else {
+                showInternalMsg("Les codes doivent être identiques");
+            }
+        }
+    </script>
+</body>
+</html>

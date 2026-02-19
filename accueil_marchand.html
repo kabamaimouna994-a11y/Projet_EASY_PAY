@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Administration EASY-PAY</title>
+    <style>
+        :root { --wave-orange: #ff8c00; --text-dark: #2c3e50; --bg-light: #f0f2f5; --danger: #e74c3c; }
+        
+        body { margin: 0; font-family: 'Segoe UI', sans-serif; background: var(--bg-light); display: flex; flex-direction: column; align-items: center; min-height: 100vh; padding: 20px; box-sizing: border-box; }
+        
+        .nav-header { width: 100%; max-width: 450px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .logo { color: var(--wave-orange); font-weight: 800; font-size: 20px; }
+        .back-btn { background: white; border: 1px solid #ddd; padding: 8px 15px; border-radius: 12px; cursor: pointer; font-size: 13px; font-weight: 600; color: #666; }
+
+        .admin-card { background: white; padding: 30px; border-radius: 30px; box-shadow: 0 20px 50px rgba(0,0,0,0.1); width: 100%; max-width: 450px; text-align: center; box-sizing: border-box; position: relative; overflow: hidden; }
+        
+        .input-group { text-align: left; margin-bottom: 15px; }
+        label { font-size: 11px; font-weight: bold; color: #666; margin-left: 5px; }
+        input { width: 100%; padding: 15px; margin-top: 5px; border: 2px solid #eee; border-radius: 15px; box-sizing: border-box; outline: none; font-size: 16px; }
+        input:focus { border-color: var(--wave-orange); }
+        .btn-save { width: 100%; padding: 16px; background: var(--wave-orange); color: white; border: none; border-radius: 16px; font-weight: bold; cursor: pointer; }
+
+        /* --- SECTION HISTORIQUE AVEC SCROLL --- */
+        .history-section { width: 100%; max-width: 450px; margin-top: 20px; background: white; border-radius: 25px; padding: 20px; box-shadow: 0 5px 20px rgba(0,0,0,0.05); box-sizing: border-box; display: none; }
+        .history-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 2px solid #f0f2f5; padding-bottom: 10px; }
+        .history-title { font-weight: 800; font-size: 16px; color: var(--text-dark); }
+        .refresh-btn { background: none; border: 1px solid var(--wave-orange); color: var(--wave-orange); padding: 4px 8px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 11px; }
+
+        /* Conteneur du menu déroulant (scroll) */
+        #transactions-list { 
+            max-height: 300px; /* Hauteur max avant de défiler */
+            overflow-y: auto;  /* Active le scroll vertical */
+            padding-right: 5px;
+        }
+
+        /* Personnalisation de la barre de défilement */
+        #transactions-list::-webkit-scrollbar { width: 4px; }
+        #transactions-list::-webkit-scrollbar-thumb { background: #eee; border-radius: 10px; }
+
+        .trans-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #f9f9f9; }
+        .trans-info { text-align: left; }
+        .trans-user { font-weight: 600; font-size: 14px; color: var(--text-dark); }
+        .trans-date { font-size: 11px; color: #aaa; }
+        .trans-amount { font-weight: 800; color: #2ecc71; }
+
+        /* Style Notification (Toast) du code 1 */
+        #alert-box { position: absolute; bottom: -70px; left: 20px; right: 20px; padding: 15px; border-radius: 15px; color: white; text-align: center; font-size: 12px; font-weight: 600; background: var(--danger); transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); z-index: 1000; }
+        #alert-box.show { bottom: 20px; }
+
+        .hidden { display: none !important; }
+        @media print { .back-btn, .refresh-btn, .btn-save, .nav-header { display: none; } body { background: white; } .admin-card { box-shadow: none; } }
+    </style>
+</head>
+<body>
+
+<div class="nav-header">
+    <div class="logo">EASY-PAY</div>
+    <button class="back-btn" onclick="location.href='marchand.html'">← Retour</button>
+</div>
+
+<div class="admin-card">
+    <div id="alert-box"></div>
+    
+    <div id="form-container">
+        <h3 style="margin-top:0; color: var(--text-dark);">Configurer votre QR Code</h3>
+        <p style="font-size: 13px; color: #666;">Ces informations seront figées après validation.</p>
+        <div class="input-group">
+            <label>NOM DU MARCHAND</label>
+            <input type="text" id="m-name" placeholder="Ex: Boutique Maïmouna">
+        </div>
+        <div class="input-group">
+            <label>ID DE PAIEMENT UNIQUE</label>
+            <input type="text" id="m-code" placeholder="Ex: MCH-9920">
+        </div>
+        <button class="btn-save" onclick="saveMerchantData()">Activer le Terminal</button>
+    </div>
+
+    <div id="print-area" class="hidden">
+        <div class="merchant-name" id="display-name"></div>
+        <div class="merchant-id" id="display-code"></div>
+        <br>
+        <img id="qr-img" src="" alt="QR Code" style="width:200px; border: 8px solid #f9f9f9; border-radius:15px;">
+        <p style="font-size: 12px; color: #95a5a6; margin-top:10px;">Scannez pour payer</p>
+        <button class="btn-save" style="background:#2c3e50; margin-top:10px;" onclick="window.print()">Imprimer le support</button>
+    </div>
+</div>
+
+<div class="history-section" id="history-box">
+    <div class="history-header">
+        <span class="history-title">Paiements Reçus</span>
+        <button class="refresh-btn" onclick="loadTransactions()">Rafraîchir ↻</button>
+    </div>
+    <div id="transactions-list"></div>
+</div>
+
+<script>
+    function msgBox(texte) {
+        const box = document.getElementById('alert-box');
+        box.innerText = texte;
+        box.classList.add('show');
+        setTimeout(() => { box.classList.remove('show'); }, 3000);
+    }
+
+    window.onload = function() {
+        const savedName = localStorage.getItem('merchant_fixed_name');
+        const savedCode = localStorage.getItem('merchant_fixed_code');
+        if(savedName && savedCode) { showStaticDashboard(savedName, savedCode); }
+    };
+
+    function saveMerchantData() {
+        const name = document.getElementById('m-name').value.trim();
+        const code = document.getElementById('m-code').value.trim().toUpperCase();
+        if(!name || !code) {
+            msgBox("Veuillez remplir tous les champs.");
+            return;
+        }
+        localStorage.setItem('merchant_fixed_name', name);
+        localStorage.setItem('merchant_fixed_code', code);
+        showStaticDashboard(name, code);
+    }
+
+    function showStaticDashboard(name, code) {
+        document.getElementById('form-container').classList.add('hidden');
+        document.getElementById('display-name').innerText = name;
+        document.getElementById('display-code').innerText = "ID: " + code;
+        document.getElementById('qr-img').src = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${code}`;
+        document.getElementById('print-area').classList.remove('hidden');
+        document.getElementById('history-box').style.display = 'block';
+        loadTransactions();
+    }
+
+    function loadTransactions() {
+        const list = document.getElementById('transactions-list');
+        const transactions = JSON.parse(localStorage.getItem('wave_transactions') || '[]');
+        if (transactions.length === 0) {
+            list.innerHTML = "<p style='color:#aaa; font-size:13px; padding:20px;'>Aucun paiement reçu.</p>";
+            return;
+        }
+        list.innerHTML = "";
+        transactions.slice().reverse().forEach(t => {
+            list.innerHTML += `
+                <div class="trans-item">
+                    <div class="trans-info">
+                        <div class="trans-user">${t.client_name || 'Client Inconnu'}</div>
+                        <div class="trans-date">${t.date || 'Date inconnue'}</div>
+                    </div>
+                    <div class="trans-amount">+ ${t.amount} FCFA</div>
+                </div>`;
+        });
+    }
+</script>
+</body>
+</html>

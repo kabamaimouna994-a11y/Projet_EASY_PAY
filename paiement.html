@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EASY-PAY - Scan & Pay</title>
+    <script src="https://unpkg.com/html5-qrcode"></script>
+    <style>
+        :root { --wave-blue: #4c4dfc; --wave-light: #f4f6ff; --danger: #e74c3c; --success: #2ecc71; }
+        body { margin: 0; font-family: 'Segoe UI', sans-serif; background-color: #eef1f7; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; }
+        .card { width: 90%; max-width: 380px; height: 620px; background: white; border-radius: 30px; position: relative; overflow-y: auto; box-shadow: 0 20px 40px rgba(0,0,0,0.1); }
+        .header { background: var(--wave-blue); color: white; padding: 20px; display: flex; align-items: center; gap: 15px; position: sticky; top: 0; z-index: 10; }
+        .back-btn { text-decoration: none; color: white; font-size: 24px; cursor: pointer; border: none; background: none; }
+        .body { padding: 20px 25px; }
+        .services-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
+        .service-item { background: #f8f9fa; padding: 12px; border-radius: 15px; text-align: center; cursor: pointer; border: 2px solid transparent; transition: 0.2s; font-size: 12px; font-weight: 600; }
+        .service-item span { font-size: 20px; display: block; margin-bottom: 4px; }
+        #reader { width: 100%; border-radius: 18px; overflow: hidden; display: none; margin-bottom: 20px; border: 2px solid var(--wave-blue); }
+        .scanner-btn { width: 100%; height: 55px; background: #1a1a1a; border-radius: 18px; display: flex; justify-content: center; align-items: center; color: white; cursor: pointer; margin-bottom: 20px; font-weight: bold; border: none; }
+        #alert { position: fixed; bottom: -80px; left: 50%; transform: translateX(-50%); width: 80%; padding: 15px; border-radius: 15px; color: white; text-align: center; z-index: 1000; transition: 0.5s; }
+        #alert.show { bottom: 30px; }
+        .input-group { margin-bottom: 15px; }
+        label { display: block; font-weight: 600; color: #7f8c8d; margin-bottom: 5px; font-size: 11px; }
+        input { width: 100%; padding: 14px; border: 2px solid #edf0f2; border-radius: 12px; box-sizing: border-box; font-size: 16px; }
+        .shop-display { background: var(--wave-light); padding: 10px; border-radius: 12px; text-align: center; margin-bottom: 15px; display: none; border: 1px dashed var(--wave-blue); }
+        .btn-pay { width: 100%; padding: 16px; background: var(--wave-blue); color: white; border: none; border-radius: 16px; font-weight: bold; cursor: pointer; }
+        #pin-screen, #receipt-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: none; flex-direction: column; align-items: center; z-index: 100; background: white; }
+        #pin-screen { justify-content: center; }
+        #receipt-overlay { padding-top: 50px; text-align: center; }
+        .receipt-amt { font-size: 32px; font-weight: 800; color: var(--wave-blue); margin: 10px 0; }
+        .receipt-details { width: 80%; border-top: 1px solid #eee; margin-top: 20px; padding-top: 20px; text-align: left; margin: 20px auto; }
+        .receipt-row { display: flex; justify-content: space-between; margin-bottom: 12px; font-size: 14px; }
+        .pin-dots { display: flex; gap: 15px; margin: 25px 0; }
+        .dot { width: 14px; height: 14px; border: 2px solid #ddd; border-radius: 50%; }
+        .dot.active { background: var(--wave-blue); border-color: var(--wave-blue); }
+        .numpad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; }
+        .num-btn { width: 60px; height: 60px; border-radius: 50%; border: none; background: #f8f9fa; font-size: 20px; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <div id="alert"></div>
+
+        <div id="main-screen">
+            <div class="header">
+                <button class="back-btn" onclick="location.href='accueil.html'">←</button>
+                <h3 style="margin:0">Services & Paiements</h3>
+            </div>
+            <div class="body">
+                <div class="services-grid">
+                    <div class="service-item" onclick="selectService('ABC12346', 'BOULANGERIE PAUL')"><span>🥐</span>Boulangerie</div>
+                    <div class="service-item" onclick="selectService('RECH-TEL', 'RECHARGE CRÉDIT')"><span>📱</span>Crédit Tel</div>
+                    <div class="service-item" onclick="selectService('99887766EL', 'CIE ÉLECTRICITÉ')"><span>💡</span>Électricité</div>
+                    <div class="service-item" onclick="selectService('11223344EA', 'SODECI EAU')"><span>💧</span>Eau</div>
+                </div>
+
+                <div id="reader"></div>
+                <button id="btn-scan" class="scanner-btn" onclick="initScanner()">📷 SCANNER UN CODE QR</button>
+                
+                <div id="shop-info" class="shop-display">
+                    <small style="color:var(--wave-blue)">DESTINATAIRE</small><br><strong id="target-shop"></strong>
+                </div>
+
+                <div class="input-group">
+                    <label>Code Marchand</label>
+                    <input type="text" id="merchant-code" placeholder="Ex: ABC12346" oninput="verifierCode()">
+                </div>
+                <div class="input-group">
+                    <label>Montant (F CFA)</label>
+                    <input type="number" id="amount" placeholder="0">
+                </div>
+                <button class="btn-pay" onclick="ouvrirPin()">Confirmer</button>
+            </div>
+        </div>
+
+        <div id="pin-screen">
+            <h3>Code PIN</h3>
+            <div class="pin-dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
+            <div class="numpad">
+                <button class="num-btn" onclick="press('1')">1</button><button class="num-btn" onclick="press('2')">2</button><button class="num-btn" onclick="press('3')">3</button>
+                <button class="num-btn" onclick="press('4')">4</button><button class="num-btn" onclick="press('5')">5</button><button class="num-btn" onclick="press('6')">6</button>
+                <button class="num-btn" onclick="press('7')">7</button><button class="num-btn" onclick="press('8')">8</button><button class="num-btn" onclick="press('9')">9</button>
+                <button class="num-btn" style="background:none" onclick="pinSaisi=''; updateDots()">✕</button>
+                <button class="num-btn" onclick="press('0')">0</button>
+                <button class="num-btn" style="background:none" onclick="document.getElementById('pin-screen').style.display='none'">←</button>
+            </div>
+        </div>
+
+        <div id="receipt-overlay">
+            <div style="font-size: 60px; color: var(--success); margin-bottom: 10px;">✓</div>
+            <div id="rec-status-text" style="color: var(--success); font-weight: bold;">Réussi</div>
+            <div class="receipt-amt" id="rec-amt">0 F</div>
+            <div class="receipt-details">
+                <div class="receipt-row"><span>À</span><span id="rec-dest" style="font-weight:600"></span></div>
+                <div class="receipt-row"><span>Date</span><span id="rec-date"></span></div>
+                <div class="receipt-row"><span>ID</span><span id="rec-id"></span></div>
+            </div>
+            <button class="btn-pay" style="width:80%; background:#f0f2f5; color:#333;" onclick="location.href='accueil.html'">Retour</button>
+        </div>
+    </div>
+
+    <script>
+        const MARCHANDS = { "ABC12346": "BOULANGERIE PAUL", "RECH-TEL": "RECHARGE CRÉDIT", "99887766EL": "CIE ÉLECTRICITÉ", "11223344EA": "SODECI EAU" };
+        let pinSaisi = "";
+        let scanner;
+
+        function notify(msg, isErr) {
+            const a = document.getElementById('alert');
+            a.innerText = msg; a.style.background = isErr ? '#e74c3c' : '#2ecc71';
+            a.classList.add('show'); setTimeout(() => a.classList.remove('show'), 2500);
+        }
+
+        function verifierCode() {
+            const c = document.getElementById('merchant-code').value.toUpperCase();
+            const info = document.getElementById('shop-info');
+            if (MARCHANDS[c]) { document.getElementById('target-shop').innerText = MARCHANDS[c]; info.style.display = "block"; return true; }
+            info.style.display = "none"; return false;
+        }
+
+        async function initScanner() {
+            document.getElementById('reader').style.display = 'block';
+            document.getElementById('btn-scan').style.display = 'none';
+            scanner = new Html5Qrcode("reader");
+            await scanner.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 }, (text) => {
+                document.getElementById('merchant-code').value = text;
+                stopScanner();
+                const exist = verifierCode();
+                if(exist) { notify("Code détecté ! Entrez le montant.", false); document.getElementById('amount').focus(); }
+            });
+        }
+
+        function stopScanner() { if (scanner) scanner.stop().then(() => { document.getElementById('reader').style.display = 'none'; document.getElementById('btn-scan').style.display = 'flex'; }); }
+
+        function selectService(code, name) { document.getElementById('merchant-code').value = code; verifierCode(); document.getElementById('amount').focus(); }
+
+        function ouvrirPin() {
+            const c = document.getElementById('merchant-code').value.toUpperCase();
+            const mnt = parseFloat(document.getElementById('amount').value);
+            const solde = parseFloat(localStorage.getItem('wave_solde')) || 0;
+            if (!MARCHANDS[c]) return notify("Marchand inconnu", true);
+            if (!mnt || mnt <= 0) return notify("Entrez un montant", true);
+            if (mnt > solde) return notify("Solde insuffisant", true);
+            pinSaisi = ""; updateDots();
+            document.getElementById('pin-screen').style.display = 'flex';
+        }
+
+        function press(n) { if (pinSaisi.length < 4) { pinSaisi += n; updateDots(); if (pinSaisi.length === 4) setTimeout(validerFinal, 300); } }
+        function updateDots() { const dots = document.querySelectorAll('.dot'); dots.forEach((d, i) => d.classList.toggle('active', i < pinSaisi.length)); }
+
+        function validerFinal() {
+            const codeCorrect = localStorage.getItem('wave_pin') || "0000";
+            if (pinSaisi === codeCorrect) finaliser();
+            else { notify("PIN incorrect", true); pinSaisi = ""; updateDots(); }
+        }
+
+        function finaliser() {
+            const mnt = parseFloat(document.getElementById('amount').value);
+            const code = document.getElementById('merchant-code').value.toUpperCase();
+            const currentUser = localStorage.getItem('wave_user') || "Client";
+            const dateStr = new Date().toLocaleString('fr-FR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+            
+            // 1. Mise à jour du solde
+            const nouveauSolde = parseFloat(localStorage.getItem('wave_solde')) - mnt;
+            localStorage.setItem('wave_solde', nouveauSolde);
+            
+            // 2. Historique pour le CLIENT (pour accueil.html)
+            const userTransKey = "wave_trans_" + currentUser;
+            const userHistory = JSON.parse(localStorage.getItem(userTransKey) || '[]');
+            userHistory.push({ 
+                dest: MARCHANDS[code], 
+                montant: mnt.toLocaleString(), 
+                date: dateStr 
+            });
+            localStorage.setItem(userTransKey, JSON.stringify(userHistory));
+
+            // 3. Historique pour le MARCHAND (pour l'admin)
+            const merchantHistory = JSON.parse(localStorage.getItem('wave_transactions') || '[]');
+            merchantHistory.push({ 
+                client_name: currentUser, 
+                amount: mnt.toLocaleString(), 
+                date: dateStr, 
+                merchant_code: code 
+            });
+            localStorage.setItem('wave_transactions', JSON.stringify(merchantHistory));
+
+            // 4. Affichage du Reçu
+            document.getElementById('rec-amt').innerText = mnt.toLocaleString() + " F CFA";
+            document.getElementById('rec-dest').innerText = MARCHANDS[code];
+            document.getElementById('rec-date').innerText = dateStr;
+            document.getElementById('rec-id').innerText = "WAV-" + Math.floor(Math.random()*900000);
+            document.getElementById('receipt-overlay').style.display = 'flex';
+        }
+    </script>
+</body>
+</html>

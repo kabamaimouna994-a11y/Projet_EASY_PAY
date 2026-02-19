@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EASY-PAY - Accueil Client</title>
+    <style>
+        :root { --wave-blue: #4c4dfc; --wave-orange: #ff8c00; --text-dark: #2c3e50; --ai-bg: #f4f4f9; }
+        body { margin: 0; font-family: 'Segoe UI', sans-serif; background: #f0f2f5; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; }
+        
+        .app-shell { 
+            width: 90%; max-width: 380px; height: 640px; 
+            background: white; border-radius: 30px; 
+            box-shadow: 0 20px 50px rgba(0,0,0,0.1); 
+            display: flex; flex-direction: column; position: relative; overflow: hidden;
+        }
+
+        .header { background: var(--wave-blue); padding: 50px 20px; color: white; text-align: center; position: relative; }
+        .balance { font-size: 38px; font-weight: 800; cursor: pointer; }
+        .settings-icon { position: absolute; top: 20px; right: 20px; cursor: pointer; font-size: 20px; opacity: 0.8; }
+
+        .main-menu { padding: 25px 20px; display: flex; justify-content: space-around; border-bottom: 8px solid #f0f2f5; }
+        .menu-item { display: flex; flex-direction: column; align-items: center; cursor: pointer; text-decoration: none; color: inherit; width: 45%; }
+        .icon-circle { width: 60px; height: 60px; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 24px; margin-bottom: 8px; }
+        
+        .bg-blue { background: #e8e9ff; color: var(--wave-blue); }
+        .bg-orange { background: #fff2e6; color: var(--wave-orange); }
+
+        .trans-list { flex-grow: 1; overflow-y: auto; padding: 10px 0; background: #fff; }
+        .trans-item { display: flex; justify-content: space-between; padding: 15px 20px; border-bottom: 1px solid #f9f9f9; }
+
+        /* --- STYLE DE L'IA --- */
+        #ai-bubble {
+            position: absolute; bottom: 20px; right: 20px; width: 55px; height: 55px; 
+            background: var(--wave-blue); border-radius: 50%; display: flex; 
+            justify-content: center; align-items: center; color: white; 
+            font-size: 24px; cursor: pointer; box-shadow: 0 5px 15px rgba(0,0,0,0.2); z-index: 1000;
+        }
+
+        #ai-chat-window {
+            position: absolute; bottom: 85px; right: 20px; width: 280px; height: 350px; 
+            background: white; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); 
+            display: none; flex-direction: column; z-index: 1000; border: 1px solid #eee; overflow: hidden;
+        }
+
+        .ai-header { background: var(--wave-blue); color: white; padding: 12px; font-weight: 600; font-size: 14px; display: flex; justify-content: space-between; }
+        #ai-messages { flex-grow: 1; padding: 10px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; background: var(--ai-bg); }
+        .msg { padding: 8px 12px; border-radius: 12px; font-size: 12px; max-width: 85%; line-height: 1.4; }
+        .msg-bot { background: white; align-self: flex-start; color: var(--text-dark); border: 1px solid #eee; }
+        .msg-user { background: var(--wave-blue); align-self: flex-end; color: white; }
+        .ai-input-area { padding: 10px; display: flex; gap: 5px; border-top: 1px solid #eee; }
+        #ai-input { flex-grow: 1; border: 1px solid #eee; padding: 8px; border-radius: 10px; outline: none; font-size: 12px; }
+
+        #logout-modal {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(255,255,255,0.98); z-index: 2000;
+            display: none; flex-direction: column; justify-content: center; align-items: center;
+            padding: 30px; text-align: center; box-sizing: border-box;
+        }
+        .btn-confirm { width: 100%; padding: 16px; background: var(--wave-blue); color: white; border: none; border-radius: 16px; font-weight: bold; cursor: pointer; font-size: 16px; margin-bottom: 10px; }
+        .btn-cancel { background: none; border: none; color: #999; font-weight: 600; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+    <div class="app-shell">
+        <div id="logout-modal">
+            <h3 style="color: var(--text-dark);">Déconnexion</h3>
+            <p style="color: #666; margin-bottom: 30px;">Voulez-vous vous déconnecter ?</p>
+            <button class="btn-confirm" onclick="executeLogout()">Oui, me déconnecter</button>
+            <button class="btn-cancel" onclick="closeLogoutModal()">Annuler</button>
+        </div>
+
+        <div id="ai-chat-window">
+            <div class="ai-header">
+                <span>Assistant EASY-PAY</span>
+                <span onclick="toggleAI()" style="cursor:pointer">✕</span>
+            </div>
+            <div id="ai-messages">
+                <div class="msg msg-bot">Bonjour ! Je suis votre assistant. Comment puis-je vous aider ?</div>
+            </div>
+            <div class="ai-input-area">
+                <input type="text" id="ai-input" placeholder="Tapez ici...">
+                <button onclick="askAI()" style="border:none; background:none; color:var(--wave-blue); font-weight:bold; cursor:pointer;">OK</button>
+            </div>
+        </div>
+
+        <div id="ai-bubble" onclick="toggleAI()">✨</div>
+
+        <div class="header">
+            <div class="settings-icon" onclick="openLogoutModal()">⚙️</div>
+            <div class="balance" onclick="toggleViewSolde()">
+                <span id="display-solde">••••</span> F
+            </div>
+            <p id="welcome-txt" style="margin-top:10px; opacity:0.9; font-size:14px;">Bonjour, <span id="user-name">Client</span></p>
+        </div>
+
+        <div class="main-menu">
+            <div class="menu-item" onclick="toggleViewSolde()">
+                <div class="icon-circle bg-blue">👁️</div>
+                <span style="font-size:13px; font-weight:600">Solde</span>
+            </div>
+            
+            <a href="paiement.html" class="menu-item">
+                <div class="icon-circle bg-orange">🛒</div>
+                <span style="font-size:13px; font-weight:600">Paiement</span>
+            </a>
+        </div>
+
+        <div class="trans-list" id="trans-container"></div>
+    </div>
+
+    <script>
+        // Variables globales pour l'utilisateur
+        const currentUser = localStorage.getItem('wave_user') || "Client";
+        const userTransKey = "wave_trans_" + currentUser; // Clé unique par utilisateur
+
+        window.onload = function() {
+            // Vérification simple de l'auth
+            if (sessionStorage.getItem('auth') !== 'true' && sessionStorage.getItem('is_auth') !== 'true') {
+                window.location.replace("index.html");
+                return;
+            }
+            
+            document.getElementById('user-name').innerText = currentUser;
+            loadTransactions();
+        };
+
+        function toggleViewSolde() {
+            const el = document.getElementById('display-solde');
+            const realSolde = Number(localStorage.getItem('wave_solde') || 0).toLocaleString();
+            el.innerText = (el.innerText === "••••") ? realSolde : "••••";
+        }
+
+        // CHARGEMENT DE L'HISTORIQUE FILTRÉ
+        function loadTransactions() {
+            const container = document.getElementById('trans-container');
+            
+            // On charge UNIQUEMENT les transactions de cet utilisateur
+            const data = JSON.parse(localStorage.getItem(userTransKey)) || [];
+            
+            if (data.length === 0) {
+                container.innerHTML = `
+                    <div style="text-align:center; color:#ccc; margin-top:50px;">
+                        <p>Aucune transaction</p>
+                        <small>Vos futurs paiements s'afficheront ici.</small>
+                    </div>`;
+                return;
+            }
+
+            container.innerHTML = "";
+            data.slice().reverse().forEach(t => {
+                container.innerHTML += `
+                    <div class="trans-item">
+                        <div>
+                            <div style="font-weight:700; font-size:14px; color:var(--text-dark)">${t.dest}</div>
+                            <div style="font-size:11px; color:#999;">${t.date}</div>
+                        </div>
+                        <div style="font-weight:800; color:#e74c3c;">-${t.montant} F</div>
+                    </div>`;
+            });
+        }
+
+        /* --- LOGIQUE IA SYNCHRONISÉE --- */
+        function toggleAI() {
+            const win = document.getElementById('ai-chat-window');
+            win.style.display = (win.style.display === 'flex') ? 'none' : 'flex';
+        }
+
+        function askAI() {
+            const input = document.getElementById('ai-input');
+            const container = document.getElementById('ai-messages');
+            if (!input.value.trim()) return;
+
+            const userText = input.value;
+            const uMsg = document.createElement('div');
+            uMsg.className = "msg msg-user";
+            uMsg.innerText = userText;
+            container.appendChild(uMsg);
+
+            const prompt = userText.toLowerCase();
+            input.value = "";
+
+            setTimeout(() => {
+                const bMsg = document.createElement('div');
+                bMsg.className = "msg msg-bot";
+                
+                if (prompt.includes("solde")) {
+                    const solde = localStorage.getItem('wave_solde') || 0;
+                    bMsg.innerText = "Votre solde actuel est de " + Number(solde).toLocaleString() + " F.";
+                } else if (prompt.includes("transaction") || prompt.includes("historique")) {
+                    const data = JSON.parse(localStorage.getItem(userTransKey)) || [];
+                    bMsg.innerText = "Vous avez effectué " + data.length + " transaction(s) avec ce compte.";
+                } else if (prompt.includes("qui suis-je") || prompt.includes("nom")) {
+                    bMsg.innerText = "Vous êtes connecté en tant que " + currentUser + ".";
+                } else {
+                    bMsg.innerText = "Je peux vous donner votre solde ou le nombre de vos transactions personnelles.";
+                }
+                
+                container.appendChild(bMsg);
+                container.scrollTop = container.scrollHeight;
+            }, 700);
+        }
+
+        /* --- MODAL & LOGOUT --- */
+        function openLogoutModal() { document.getElementById('logout-modal').style.display = 'flex'; }
+        function closeLogoutModal() { document.getElementById('logout-modal').style.display = 'none'; }
+        function executeLogout() { 
+            sessionStorage.clear(); 
+            window.location.replace("index.html"); 
+        }
+    </script>
+</body>
+</html>
