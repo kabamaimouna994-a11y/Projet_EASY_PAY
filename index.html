@@ -6,72 +6,41 @@
     <title>EASY-PAY - Bienvenue</title>
     <style>
         :root { --wave-blue: #4c4dfc; --wave-orange: #ff8c00; --text-dark: #2c3e50; --light-gray: #f8f9fa; --danger: #eb4d4b; --success: #2ecc71; }
-        
         body { margin: 0; font-family: 'Segoe UI', Roboto, sans-serif; background: #f0f2f5; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; }
-        
-        .portal-card { 
-            width: 90%; max-width: 380px; height: 620px; 
-            background: white; border-radius: 30px; 
-            box-shadow: 0 20px 50px rgba(0,0,0,0.1); 
-            overflow: hidden; position: relative; display: flex; flex-direction: column; 
-        }
-        
-        /* HEADER */
+        .portal-card { width: 90%; max-width: 380px; height: 620px; background: white; border-radius: 30px; box-shadow: 0 20px 50px rgba(0,0,0,0.1); overflow: hidden; position: relative; display: flex; flex-direction: column; }
         .portal-header { background: var(--wave-blue); color: white; padding: 35px 20px; text-align: center; z-index: 10; }
         .portal-header h2 { margin: 0; letter-spacing: 2px; font-size: 24px; }
         .portal-header p { margin: 5px 0 0; opacity: 0.8; font-size: 14px; }
-
         .portal-body { padding: 25px; flex-grow: 1; display: flex; flex-direction: column; position: relative; }
-        
         .step { display: none; width: 100%; flex-direction: column; animation: fadeIn 0.4s ease-out; height: 100%; }
         .step.active { display: flex; }
-
-        /* FORMULAIRE */
         .input-group { position: relative; margin-bottom: 20px; width: 100%; text-align: left; }
         .input-group label { display: block; font-size: 11px; font-weight: 700; color: #888; text-transform: uppercase; margin-bottom: 5px; margin-left: 5px; }
-        
         input { width: 100%; padding: 14px 18px; border: 2px solid #eee; border-radius: 16px; font-size: 16px; outline: none; transition: 0.3s; box-sizing: border-box; background: var(--light-gray); }
         input:focus { border-color: var(--wave-blue); background: white; }
-        
         .btn-action { width: 100%; padding: 18px; background: var(--wave-blue); color: white; border: none; border-radius: 18px; font-weight: bold; cursor: pointer; font-size: 16px; transition: 0.3s; margin-top: 10px; }
-        .btn-action:active { transform: scale(0.96); }
-        
-        /* NOTIFICATIONS (TOAST) */
-        #toast-msg { 
-            position: absolute; top: 10px; left: 20px; right: 20px; 
-            padding: 12px; border-radius: 12px; color: white; 
-            text-align: center; font-size: 12px; font-weight: 600; 
-            transform: translateY(-150%); transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); z-index: 1000; 
-        }
+        .btn-action:disabled { opacity: 0.6; cursor: not-allowed; }
+        #toast-msg { position: absolute; top: 10px; left: 20px; right: 20px; padding: 12px; border-radius: 12px; color: white; text-align: center; font-size: 12px; font-weight: 600; transform: translateY(-150%); transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); z-index: 1000; }
         #toast-msg.show { transform: translateY(0); }
-
-        /* SPINNER */
         .loader { border: 4px solid #f3f3f3; border-top: 4px solid var(--wave-blue); border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin-bottom: 20px; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-
-        /* CHOIX INITIAL */
         .choice-container { display: flex; gap: 15px; margin-top: 20px; }
         .choice-box { flex: 1; background: var(--light-gray); padding: 25px 15px; border-radius: 20px; display: flex; flex-direction: column; justify-content: center; align-items: center; cursor: pointer; transition: 0.3s; border: 2px solid transparent; text-align: center; }
         .choice-box:hover { border-color: var(--wave-blue); background: white; }
         .choice-box span { font-size: 30px; margin-bottom: 10px; }
-
         .footer-link { margin-top: 20px; font-size: 14px; color: var(--wave-blue); cursor: pointer; font-weight: 600; text-align: center; border: none; background: none; width: 100%; }
-        
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
 <body>
-
     <div class="portal-card">
         <div id="toast-msg"></div>
-
         <div class="portal-header">
             <h2>EASY-PAY</h2>
             <p id="header-subtitle">Bienvenue dans votre banque mobile</p>
         </div>
-        
         <div class="portal-body">
-            
+
             <div id="step-choice" class="step active">
                 <h3 style="text-align: center; margin-bottom: 25px; color: var(--text-dark);">Qui êtes-vous ?</h3>
                 <div class="choice-container">
@@ -79,7 +48,7 @@
                         <span>👤</span>
                         <b>Client</b>
                     </div>
-                    <div class="choice-box" onclick="location.href='Marchand.html'">
+                    <div class="choice-box" onclick="location.href='marchand.html'">
                         <span style="filter: hue-rotate(15deg);">🏪</span>
                         <b style="color:var(--wave-orange)">Marchand</b>
                     </div>
@@ -101,7 +70,7 @@
                     <label>Téléphone</label>
                     <input type="tel" id="reg-phone" placeholder="Ex: 07000000">
                 </div>
-                <button class="btn-action" onclick="validateIdentity()">Continuer</button>
+                <button class="btn-action" id="btn-continuer" onclick="validateIdentity()">Continuer</button>
                 <button class="footer-link" onclick="goToStep('step-choice', 'Bienvenue')">Retour</button>
             </div>
 
@@ -115,19 +84,21 @@
                     <label>Confirmer le PIN</label>
                     <input type="password" id="p2" maxlength="4" placeholder="••••" style="text-align:center; font-size: 24px; letter-spacing: 15px;">
                 </div>
-                <button class="btn-action" onclick="saveUser()">Finaliser l'inscription</button>
+                <button class="btn-action" id="btn-inscrire" onclick="saveUser()">Finaliser l'inscription</button>
             </div>
 
             <div id="step-success" class="step" style="align-items: center; text-align: center; justify-content: center;">
                 <div style="font-size: 60px; margin-bottom: 15px;">✨</div>
                 <h3 style="color: var(--text-dark);">Compte activé !</h3>
                 <p style="color: #666; font-size: 14px; margin-bottom: 30px;">Vous pouvez maintenant utiliser EASY-PAY.</p>
-                <button class="btn-action" onclick="window.location.href='Pin.html'">Se connecter</button>
+                <button class="btn-action" onclick="window.location.href='pin.html'">Se connecter</button>
             </div>
         </div>
     </div>
 
     <script>
+        const API_BASE = 'http://localhost/Projet_easypay/';
+
         function showBoxMsg(text, isError = true) {
             const toast = document.getElementById('toast-msg');
             toast.innerText = text;
@@ -139,72 +110,96 @@
         function goToStep(id, subtitle) {
             document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
             document.getElementById(id).classList.add('active');
-            if(subtitle) document.getElementById('header-subtitle').innerText = subtitle;
+            if (subtitle) document.getElementById('header-subtitle').innerText = subtitle;
         }
 
-        // --- 1. GESTION DU CLIC CLIENT (SMART LOGIN) ---
         function handleClient() {
-            const user = localStorage.getItem('wave_user');
-            
-            if (user) {
-                // Compte trouvé -> On charge
-                document.getElementById('check-text').innerText = "Bon retour, " + user;
-                goToStep('step-checking', 'Connexion...');
-                setTimeout(() => {
-                    window.location.href = "Pin.html";
-                }, 1500);
+            const tel = sessionStorage.getItem('ep_telephone');
+            if (tel) {
+                window.location.href = 'pin.html';
             } else {
-                // Pas de compte -> Inscription
                 goToStep('step-register', 'Nouvel utilisateur');
             }
         }
 
-        // --- 2. VÉRIFICATION IDENTITÉ + DOUBLON NUMÉRO ---
-        function validateIdentity() {
+        async function validateIdentity() {
             const prenom = document.getElementById('reg-prenom').value.trim();
-            const phone = document.getElementById('reg-phone').value.trim();
-            const phoneExistant = localStorage.getItem('wave_phone');
+            const phone  = document.getElementById('reg-phone').value.trim();
 
             if (prenom.length < 2 || phone.length < 8) {
                 showBoxMsg("Informations incomplètes.");
                 return;
             }
 
-            goToStep('step-checking', 'Analyse du numéro...');
+            const btn = document.getElementById('btn-continuer');
+            btn.disabled = true;
+            goToStep('step-checking', 'Vérification...');
 
-            setTimeout(() => {
-                if (phoneExistant && phone === phoneExistant) {
-                    // ERREUR : Numéro déjà utilisé
+            try {
+                const res  = await fetch(API_BASE + 'api_verifier_telephone.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ telephone: phone })
+                });
+                const data = await res.json();
+
+                if (data.success) {
+                    // Numéro déjà utilisé
                     showBoxMsg("Ce numéro appartient déjà à un compte.");
-                    goToStep('step-register', 'Numéro déjà utilisé');
                     document.getElementById('reg-phone').style.borderColor = "var(--danger)";
+                    goToStep('step-register', 'Numéro déjà utilisé');
                 } else {
-                    // OK : On continue
+                    // Numéro libre -> continuer vers PIN
                     goToStep('step-pin-create', 'Sécurité');
                 }
-            }, 1800);
+            } catch (e) {
+                showBoxMsg("Erreur réseau. Vérifiez que WAMP est démarré.");
+                goToStep('step-register', 'Erreur');
+            } finally {
+                btn.disabled = false;
+            }
         }
 
-        // --- 3. SAUVEGARDE FINALE ---
-        function saveUser() {
-            const pin1 = document.getElementById('p1').value;
-            const pin2 = document.getElementById('p2').value;
-            const prenom = document.getElementById('reg-prenom').value;
-            const phone = document.getElementById('reg-phone').value;
+        async function saveUser() {
+            const pin1   = document.getElementById('p1').value;
+            const pin2   = document.getElementById('p2').value;
+            const prenom = document.getElementById('reg-prenom').value.trim();
+            const phone  = document.getElementById('reg-phone').value.trim();
 
             if (pin1.length !== 4 || pin1 !== pin2) {
                 showBoxMsg("Les codes PIN ne correspondent pas.");
                 return;
             }
-            
-            // Stockage des données
-            localStorage.setItem('wave_pin', pin1);
-            localStorage.setItem('wave_user', prenom);
-            localStorage.setItem('wave_phone', phone);
-            localStorage.setItem('wave_solde', 5000); // Cadeau de bienvenue
-            
-            showBoxMsg("Inscription validée !", false);
-            setTimeout(() => goToStep('step-success', 'Terminé'), 1200);
+            if (!(/^\d{4}$/).test(pin1)) {
+                showBoxMsg("Le PIN doit contenir uniquement des chiffres.");
+                return;
+            }
+
+            const btn = document.getElementById('btn-inscrire');
+            btn.disabled = true;
+
+            try {
+                const res  = await fetch(API_BASE + 'api_inscription.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ nom: prenom, telephone: phone, pin: pin1 })
+                });
+                const data = await res.json();
+
+                if (data.success) {
+                    sessionStorage.setItem('ep_telephone', phone);
+                    showBoxMsg("Inscription validée !", false);
+                    setTimeout(() => goToStep('step-success', 'Terminé'), 1200);
+                } else {
+                    showBoxMsg(data.message || "Erreur lors de l'inscription.");
+                    goToStep('step-pin-create', 'Sécurité');
+                }
+            } catch (e) {
+                showBoxMsg("Erreur réseau. Vérifiez que WAMP est démarré.");
+                goToStep('step-pin-create', 'Sécurité');
+            } finally {
+                btn.disabled = false;
+            }
         }
     </script>
 </body>

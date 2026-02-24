@@ -3,49 +3,27 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EASY-PAY - Connexion</title>
+    <title>EASY-PAY - Connexion Marchand</title>
     <style>
         :root { --wave-orange: #ff8c00; --text-dark: #2c3e50; --danger: #e74c3c; }
         body { margin: 0; font-family: 'Segoe UI', sans-serif; background: #f0f2f5; display: flex; justify-content: center; align-items: center; height: 100vh; }
-
-        .portal-card {
-            width: 90%; max-width: 380px; height: 500px;
-            background: white; border-radius: 30px;
-            box-shadow: 0 20px 50px rgba(0,0,0,0.1);
-            display: flex; flex-direction: column; overflow: hidden;
-            position: relative; /* Nécessaire pour l'alerte interne */
-        }
+        .portal-card { width: 90%; max-width: 380px; height: 500px; background: white; border-radius: 30px; box-shadow: 0 20px 50px rgba(0,0,0,0.1); display: flex; flex-direction: column; overflow: hidden; position: relative; }
         .header { background: var(--wave-orange); color: white; padding: 40px 20px; text-align: center; }
         .body { padding: 30px; flex-grow: 1; display: flex; flex-direction: column; justify-content: center; }
-
         .input-group { margin-bottom: 15px; }
         label { display: block; font-size: 12px; font-weight: 600; margin-bottom: 5px; color: #666; }
         input { width: 100%; padding: 14px; border: 2px solid #eee; border-radius: 12px; box-sizing: border-box; outline: none; }
         input:focus { border-color: var(--wave-orange); }
-        
-        .btn-login {
-            width: 100%; padding: 16px; background: var(--wave-orange);
-            color: white; border: none; border-radius: 16px;
-            font-weight: bold; cursor: pointer; margin-top: 10px;
-        }
-        .back-link { margin-top: 20px; text-align: center; color: #999; cursor: pointer; font-size: 14px; }
-
-        /* --- NOTIFICATION INTERNE (Toast) --- */
-        #alert-box {
-            position: absolute; bottom: -70px; left: 20px; right: 20px;
-            padding: 15px; border-radius: 15px; color: white;
-            text-align: center; font-size: 12px; font-weight: 600;
-            background: var(--danger);
-            transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            z-index: 1000;
-        }
+        .btn-login { width: 100%; padding: 16px; background: var(--wave-orange); color: white; border: none; border-radius: 16px; font-weight: bold; cursor: pointer; margin-top: 10px; }
+        .btn-login:disabled { opacity: 0.6; }
+        .back-link { margin-top: 20px; text-align: center; color: #999; cursor: pointer; font-size: 14px; border: none; background: none; width: 100%; }
+        #alert-box { position: absolute; bottom: -70px; left: 20px; right: 20px; padding: 15px; border-radius: 15px; color: white; text-align: center; font-size: 12px; font-weight: 600; background: var(--danger); transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); z-index: 1000; }
         #alert-box.show { bottom: 20px; }
     </style>
 </head>
 <body>
     <div class="portal-card">
         <div id="alert-box"></div>
-
         <div class="header">
             <h2 style="margin:0">EASY-PAY</h2>
             <p style="font-size:14px; opacity:0.8">Accès Marchand</p>
@@ -59,12 +37,14 @@
                 <label>CODE PIN AGENT</label>
                 <input type="password" id="shop-pin" maxlength="4" placeholder="••••">
             </div>
-            <button class="btn-login" onclick="loginMarchand()">Se connecter</button>
-            <div class="back-link" onclick="location.href='index.html'">← Retour</div>
+            <button class="btn-login" id="btn-login" onclick="loginMarchand()">Se connecter</button>
+            <button class="back-link" onclick="location.href='index.html'">← Retour</button>
         </div>
     </div>
 
     <script>
+        const API_BASE = 'http://localhost/Projet_easypay/';
+
         function msgBox(texte) {
             const box = document.getElementById('alert-box');
             box.innerText = texte;
@@ -72,16 +52,40 @@
             setTimeout(() => { box.classList.remove('show'); }, 3000);
         }
 
-        function loginMarchand() {
-            const name = document.getElementById('shop-name').value;
-            const pin = document.getElementById('shop-pin').value;
-            if(name.trim() !== "" && pin.length === 4) {
-                localStorage.setItem('wave_active', 'true');
-                localStorage.setItem('wave_type', 'marchand');
-                localStorage.setItem('wave_shop_name', name.toUpperCase());
-                window.location.href = "accueil_marchand.html";
-            } else {
+        async function loginMarchand() {
+            const name = document.getElementById('shop-name').value.trim();
+            const pin  = document.getElementById('shop-pin').value;
+
+            if (!name || pin.length !== 4) {
                 msgBox("Veuillez entrer le nom de l'entreprise et un code PIN à 4 chiffres.");
+                return;
+            }
+
+            const btn = document.getElementById('btn-login');
+            btn.disabled = true;
+
+            try {
+                const res  = await fetch(API_BASE + 'api_marchand.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'login', nom_boutique: name, pin })
+                });
+                const data = await res.json();
+
+                if (data.success) {
+                    // Sauvegarder les infos marchand en session (clés adaptées à easy_pay)
+                    sessionStorage.setItem('ep_id_marchand',         data.marchand.id_marchand);
+                    sessionStorage.setItem('ep_nom_boutique',        data.marchand.nom_boutique);
+                    sessionStorage.setItem('ep_marchand_fixed_name', data.marchand.merchant_fixed_name || '');
+                    sessionStorage.setItem('ep_marchand_fixed_code', data.marchand.merchant_fixed_code || '');
+                    window.location.href = 'accueil_marchand.html';
+                } else {
+                    msgBox(data.message || "Erreur de connexion.");
+                }
+            } catch (e) {
+                msgBox("Erreur réseau. Vérifiez que WAMP est démarré.");
+            } finally {
+                btn.disabled = false;
             }
         }
     </script>

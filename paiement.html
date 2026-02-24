@@ -28,13 +28,13 @@
         #pin-screen { justify-content: center; }
         #receipt-overlay { padding-top: 50px; text-align: center; }
         .receipt-amt { font-size: 32px; font-weight: 800; color: var(--wave-blue); margin: 10px 0; }
-        .receipt-details { width: 80%; border-top: 1px solid #eee; margin-top: 20px; padding-top: 20px; text-align: left; margin: 20px auto; }
+        .receipt-details { width: 80%; border-top: 1px solid #eee; margin: 20px auto; padding-top: 20px; text-align: left; }
         .receipt-row { display: flex; justify-content: space-between; margin-bottom: 12px; font-size: 14px; }
         .pin-dots { display: flex; gap: 15px; margin: 25px 0; }
         .dot { width: 14px; height: 14px; border: 2px solid #ddd; border-radius: 50%; }
         .dot.active { background: var(--wave-blue); border-color: var(--wave-blue); }
         .numpad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; }
-        .num-btn { width: 60px; height: 60px; border-radius: 50%; border: none; background: #f8f9fa; font-size: 20px; font-weight: bold; }
+        .num-btn { width: 60px; height: 60px; border-radius: 50%; border: none; background: #f8f9fa; font-size: 20px; font-weight: bold; cursor: pointer; }
     </style>
 </head>
 <body>
@@ -53,14 +53,11 @@
                     <div class="service-item" onclick="selectService('99887766EL', 'CIE ÉLECTRICITÉ')"><span>💡</span>Électricité</div>
                     <div class="service-item" onclick="selectService('11223344EA', 'SODECI EAU')"><span>💧</span>Eau</div>
                 </div>
-
                 <div id="reader"></div>
                 <button id="btn-scan" class="scanner-btn" onclick="initScanner()">📷 SCANNER UN CODE QR</button>
-                
                 <div id="shop-info" class="shop-display">
                     <small style="color:var(--wave-blue)">DESTINATAIRE</small><br><strong id="target-shop"></strong>
                 </div>
-
                 <div class="input-group">
                     <label>Code Marchand</label>
                     <input type="text" id="merchant-code" placeholder="Ex: ABC12346" oninput="verifierCode()">
@@ -88,7 +85,7 @@
 
         <div id="receipt-overlay">
             <div style="font-size: 60px; color: var(--success); margin-bottom: 10px;">✓</div>
-            <div id="rec-status-text" style="color: var(--success); font-weight: bold;">Réussi</div>
+            <div style="color: var(--success); font-weight: bold;">Réussi</div>
             <div class="receipt-amt" id="rec-amt">0 F</div>
             <div class="receipt-details">
                 <div class="receipt-row"><span>À</span><span id="rec-dest" style="font-weight:600"></span></div>
@@ -100,21 +97,36 @@
     </div>
 
     <script>
+        const API_BASE = 'http://localhost/Projet_easypay/';
         const MARCHANDS = { "ABC12346": "BOULANGERIE PAUL", "RECH-TEL": "RECHARGE CRÉDIT", "99887766EL": "CIE ÉLECTRICITÉ", "11223344EA": "SODECI EAU" };
-        let pinSaisi = "";
+        let pinSaisi    = "";
         let scanner;
+        let isProcessing = false;
+
+        // Clés de session adaptées à easy_pay
+        const idUser = parseInt(sessionStorage.getItem('ep_id_user'));
+        let   solde  = parseFloat(sessionStorage.getItem('ep_solde')) || 0;
+
+        if (!idUser) window.location.replace('index.html');
 
         function notify(msg, isErr) {
             const a = document.getElementById('alert');
-            a.innerText = msg; a.style.background = isErr ? '#e74c3c' : '#2ecc71';
-            a.classList.add('show'); setTimeout(() => a.classList.remove('show'), 2500);
+            a.innerText = msg;
+            a.style.background = isErr ? '#e74c3c' : '#2ecc71';
+            a.classList.add('show');
+            setTimeout(() => a.classList.remove('show'), 2500);
         }
 
         function verifierCode() {
-            const c = document.getElementById('merchant-code').value.toUpperCase();
+            const c    = document.getElementById('merchant-code').value.toUpperCase();
             const info = document.getElementById('shop-info');
-            if (MARCHANDS[c]) { document.getElementById('target-shop').innerText = MARCHANDS[c]; info.style.display = "block"; return true; }
-            info.style.display = "none"; return false;
+            if (MARCHANDS[c]) {
+                document.getElementById('target-shop').innerText = MARCHANDS[c];
+                info.style.display = "block";
+                return true;
+            }
+            info.style.display = "none";
+            return false;
         }
 
         async function initScanner() {
@@ -125,18 +137,26 @@
                 document.getElementById('merchant-code').value = text;
                 stopScanner();
                 const exist = verifierCode();
-                if(exist) { notify("Code détecté ! Entrez le montant.", false); document.getElementById('amount').focus(); }
+                if (exist) { notify("Code détecté ! Entrez le montant.", false); document.getElementById('amount').focus(); }
             });
         }
 
-        function stopScanner() { if (scanner) scanner.stop().then(() => { document.getElementById('reader').style.display = 'none'; document.getElementById('btn-scan').style.display = 'flex'; }); }
+        function stopScanner() {
+            if (scanner) scanner.stop().then(() => {
+                document.getElementById('reader').style.display = 'none';
+                document.getElementById('btn-scan').style.display = 'flex';
+            });
+        }
 
-        function selectService(code, name) { document.getElementById('merchant-code').value = code; verifierCode(); document.getElementById('amount').focus(); }
+        function selectService(code, name) {
+            document.getElementById('merchant-code').value = code;
+            verifierCode();
+            document.getElementById('amount').focus();
+        }
 
         function ouvrirPin() {
-            const c = document.getElementById('merchant-code').value.toUpperCase();
+            const c   = document.getElementById('merchant-code').value.toUpperCase();
             const mnt = parseFloat(document.getElementById('amount').value);
-            const solde = parseFloat(localStorage.getItem('wave_solde')) || 0;
             if (!MARCHANDS[c]) return notify("Marchand inconnu", true);
             if (!mnt || mnt <= 0) return notify("Entrez un montant", true);
             if (mnt > solde) return notify("Solde insuffisant", true);
@@ -144,51 +164,59 @@
             document.getElementById('pin-screen').style.display = 'flex';
         }
 
-        function press(n) { if (pinSaisi.length < 4) { pinSaisi += n; updateDots(); if (pinSaisi.length === 4) setTimeout(validerFinal, 300); } }
-        function updateDots() { const dots = document.querySelectorAll('.dot'); dots.forEach((d, i) => d.classList.toggle('active', i < pinSaisi.length)); }
-
-        function validerFinal() {
-            const codeCorrect = localStorage.getItem('wave_pin') || "0000";
-            if (pinSaisi === codeCorrect) finaliser();
-            else { notify("PIN incorrect", true); pinSaisi = ""; updateDots(); }
+        function press(n) {
+            if (pinSaisi.length < 4) {
+                pinSaisi += n; updateDots();
+                if (pinSaisi.length === 4) setTimeout(validerFinal, 300);
+            }
         }
 
-        function finaliser() {
-            const mnt = parseFloat(document.getElementById('amount').value);
+        function updateDots() {
+            const dots = document.querySelectorAll('.dot');
+            dots.forEach((d, i) => d.classList.toggle('active', i < pinSaisi.length));
+        }
+
+        async function validerFinal() {
+            if (isProcessing) return;
+            isProcessing = true;
+
+            const mnt  = parseFloat(document.getElementById('amount').value);
             const code = document.getElementById('merchant-code').value.toUpperCase();
-            const currentUser = localStorage.getItem('wave_user') || "Client";
-            const dateStr = new Date().toLocaleString('fr-FR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
-            
-            // 1. Mise à jour du solde
-            const nouveauSolde = parseFloat(localStorage.getItem('wave_solde')) - mnt;
-            localStorage.setItem('wave_solde', nouveauSolde);
-            
-            // 2. Historique pour le CLIENT (pour accueil.html)
-            const userTransKey = "wave_trans_" + currentUser;
-            const userHistory = JSON.parse(localStorage.getItem(userTransKey) || '[]');
-            userHistory.push({ 
-                dest: MARCHANDS[code], 
-                montant: mnt.toLocaleString(), 
-                date: dateStr 
-            });
-            localStorage.setItem(userTransKey, JSON.stringify(userHistory));
 
-            // 3. Historique pour le MARCHAND (pour l'admin)
-            const merchantHistory = JSON.parse(localStorage.getItem('wave_transactions') || '[]');
-            merchantHistory.push({ 
-                client_name: currentUser, 
-                amount: mnt.toLocaleString(), 
-                date: dateStr, 
-                merchant_code: code 
-            });
-            localStorage.setItem('wave_transactions', JSON.stringify(merchantHistory));
+            try {
+                const res  = await fetch(API_BASE + 'api_paiement.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        id_user:       idUser,
+                        pin:           pinSaisi,
+                        merchant_code: code,
+                        merchant_name: MARCHANDS[code],
+                        montant:       mnt
+                    })
+                });
+                const data = await res.json();
 
-            // 4. Affichage du Reçu
-            document.getElementById('rec-amt').innerText = mnt.toLocaleString() + " F CFA";
-            document.getElementById('rec-dest').innerText = MARCHANDS[code];
-            document.getElementById('rec-date').innerText = dateStr;
-            document.getElementById('rec-id').innerText = "WAV-" + Math.floor(Math.random()*900000);
-            document.getElementById('receipt-overlay').style.display = 'flex';
+                if (data.success) {
+                    // Mettre à jour le solde en session
+                    solde = data.nouveau_solde;
+                    sessionStorage.setItem('ep_solde', solde);
+
+                    document.getElementById('rec-amt').innerText  = mnt.toLocaleString() + " F CFA";
+                    document.getElementById('rec-dest').innerText = MARCHANDS[code];
+                    document.getElementById('rec-date').innerText = data.date;
+                    document.getElementById('rec-id').innerText   = data.ref;
+                    document.getElementById('receipt-overlay').style.display = 'flex';
+                } else {
+                    notify(data.message || "Erreur PIN", true);
+                    pinSaisi = ""; updateDots();
+                }
+            } catch (e) {
+                notify("Erreur réseau. Vérifiez WAMP.", true);
+                pinSaisi = ""; updateDots();
+            } finally {
+                isProcessing = false;
+            }
         }
     </script>
 </body>
