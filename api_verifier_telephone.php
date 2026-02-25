@@ -1,8 +1,9 @@
 <?php
-// api_verifier_telephone.php - Vérification numéro (inscription + récupération PIN)
+// api_verifier_telephone.php
 require_once 'db.php';
 
-$data      = getJsonBody();
+// Optionnel : s'assurer que getJsonBody est défini (souvent dans db.php)
+$data      = json_decode(file_get_contents('php://input'), true);
 $telephone = trim($data['telephone'] ?? '');
 
 if (empty($telephone)) {
@@ -15,9 +16,9 @@ $stmt = $db->prepare("SELECT id_user FROM client WHERE telephone = ?");
 $stmt->execute([$telephone]);
 
 if ($stmt->fetch()) {
-    // Numéro trouvé en BDD
-    echo json_encode(['success' => true, 'message' => 'Numéro vérifié.']);
+    // Le numéro existe : on pourra se connecter
+    echo json_encode(['success' => true, 'message' => 'Client existant.']);
 } else {
-    // Numéro introuvable
-    echo json_encode(['success' => false, 'message' => 'Numéro de téléphone inconnu.']);
+    // Le numéro n'existe pas : on peut créer un compte
+    echo json_encode(['success' => false, 'message' => 'Nouveau client.']);
 }

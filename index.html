@@ -28,7 +28,9 @@
         .choice-box { flex: 1; background: var(--light-gray); padding: 25px 15px; border-radius: 20px; display: flex; flex-direction: column; justify-content: center; align-items: center; cursor: pointer; transition: 0.3s; border: 2px solid transparent; text-align: center; }
         .choice-box:hover { border-color: var(--wave-blue); background: white; }
         .choice-box span { font-size: 30px; margin-bottom: 10px; }
-        .footer-link { margin-top: 20px; font-size: 14px; color: var(--wave-blue); cursor: pointer; font-weight: 600; text-align: center; border: none; background: none; width: 100%; }
+        .footer-link { margin-top: 25px; font-size: 14px; color: #666; text-align: center; border: none; background: none; width: 100%; cursor: default; }
+        .footer-link b { color: var(--wave-blue); cursor: pointer; text-decoration: none; }
+        .footer-link b:hover { text-decoration: underline; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
@@ -44,7 +46,7 @@
             <div id="step-choice" class="step active">
                 <h3 style="text-align: center; margin-bottom: 25px; color: var(--text-dark);">Qui êtes-vous ?</h3>
                 <div class="choice-container">
-                    <div class="choice-box" onclick="handleClient()">
+                    <div class="choice-box" onclick="goToStep('step-register', 'Identification')">
                         <span>👤</span>
                         <b>Client</b>
                     </div>
@@ -53,12 +55,16 @@
                         <b style="color:var(--wave-orange)">Marchand</b>
                     </div>
                 </div>
-                <button class="footer-link" onclick="goToStep('step-register', 'Nouveau compte')">Créer un nouveau compte</button>
+                
+                <div class="footer-link">
+                    Vous n'avez pas de compte ? <br>
+                    <b onclick="goToStep('step-register', 'Nouvelle Inscription')">Créer un compte</b>
+                </div>
             </div>
 
             <div id="step-checking" class="step" style="align-items: center; justify-content: center;">
                 <div class="loader"></div>
-                <p id="check-text" style="color: #666; font-size: 14px;">Vérification...</p>
+                <p id="check-text" style="color: #666; font-size: 14px;">Vérification de votre compte...</p>
             </div>
 
             <div id="step-register" class="step">
@@ -71,11 +77,11 @@
                     <input type="tel" id="reg-phone" placeholder="Ex: 07000000">
                 </div>
                 <button class="btn-action" id="btn-continuer" onclick="validateIdentity()">Continuer</button>
-                <button class="footer-link" onclick="goToStep('step-choice', 'Bienvenue')">Retour</button>
+                <button class="footer-link" style="color: var(--wave-blue); font-weight: bold; cursor: pointer;" onclick="goToStep('step-choice', 'Bienvenue')">Retour</button>
             </div>
 
             <div id="step-pin-create" class="step">
-                <p style="text-align:center; font-size:13px; color:#666; margin-bottom:20px;">Choisissez un code secret à 4 chiffres.</p>
+                <p style="text-align:center; font-size:13px; color:#666; margin-bottom:20px;">Nouveau compte détecté. <br>Choisissez un code secret à 4 chiffres.</p>
                 <div class="input-group">
                     <label>Définir le PIN</label>
                     <input type="password" id="p1" maxlength="4" placeholder="••••" style="text-align:center; font-size: 24px; letter-spacing: 15px;">
@@ -90,7 +96,7 @@
             <div id="step-success" class="step" style="align-items: center; text-align: center; justify-content: center;">
                 <div style="font-size: 60px; margin-bottom: 15px;">✨</div>
                 <h3 style="color: var(--text-dark);">Compte activé !</h3>
-                <p style="color: #666; font-size: 14px; margin-bottom: 30px;">Vous pouvez maintenant utiliser EASY-PAY.</p>
+                <p style="color: #666; font-size: 14px; margin-bottom: 30px;">Bienvenue dans la famille EASY-PAY.</p>
                 <button class="btn-action" onclick="window.location.href='pin.html'">Se connecter</button>
             </div>
         </div>
@@ -113,21 +119,11 @@
             if (subtitle) document.getElementById('header-subtitle').innerText = subtitle;
         }
 
-        function handleClient() {
-            const tel = sessionStorage.getItem('ep_telephone');
-            if (tel) {
-                window.location.href = 'pin.html';
-            } else {
-                goToStep('step-register', 'Nouvel utilisateur');
-            }
-        }
-
         async function validateIdentity() {
-            const prenom = document.getElementById('reg-prenom').value.trim();
             const phone  = document.getElementById('reg-phone').value.trim();
 
-            if (prenom.length < 2 || phone.length < 8) {
-                showBoxMsg("Informations incomplètes.");
+            if (phone.length < 8) {
+                showBoxMsg("Numéro de téléphone invalide.");
                 return;
             }
 
@@ -136,24 +132,25 @@
             goToStep('step-checking', 'Vérification...');
 
             try {
-                const res  = await fetch(API_BASE + 'api_verifier_telephone.php', {
+                const res = await fetch(API_BASE + 'api_verifier_telephone.php', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ telephone: phone })
                 });
                 const data = await res.json();
 
+                sessionStorage.setItem('ep_telephone', phone);
+
                 if (data.success) {
-                    // Numéro déjà utilisé
-                    showBoxMsg("Ce numéro appartient déjà à un compte.");
-                    document.getElementById('reg-phone').style.borderColor = "var(--danger)";
-                    goToStep('step-register', 'Numéro déjà utilisé');
+                    showBoxMsg("Compte trouvé ! Redirection...", false);
+                    setTimeout(() => {
+                        window.location.href = 'pin.html';
+                    }, 1200);
                 } else {
-                    // Numéro libre -> continuer vers PIN
                     goToStep('step-pin-create', 'Sécurité');
                 }
             } catch (e) {
-                showBoxMsg("Erreur réseau. Vérifiez que WAMP est démarré.");
+                showBoxMsg("Erreur réseau. Vérifiez WAMP.");
                 goToStep('step-register', 'Erreur');
             } finally {
                 btn.disabled = false;
@@ -170,16 +167,12 @@
                 showBoxMsg("Les codes PIN ne correspondent pas.");
                 return;
             }
-            if (!(/^\d{4}$/).test(pin1)) {
-                showBoxMsg("Le PIN doit contenir uniquement des chiffres.");
-                return;
-            }
 
             const btn = document.getElementById('btn-inscrire');
             btn.disabled = true;
 
             try {
-                const res  = await fetch(API_BASE + 'api_inscription.php', {
+                const res = await fetch(API_BASE + 'api_inscription.php', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ nom: prenom, telephone: phone, pin: pin1 })
@@ -187,16 +180,14 @@
                 const data = await res.json();
 
                 if (data.success) {
-                    sessionStorage.setItem('ep_telephone', phone);
                     showBoxMsg("Inscription validée !", false);
                     setTimeout(() => goToStep('step-success', 'Terminé'), 1200);
                 } else {
-                    showBoxMsg(data.message || "Erreur lors de l'inscription.");
+                    showBoxMsg(data.message || "Erreur d'inscription.");
                     goToStep('step-pin-create', 'Sécurité');
                 }
             } catch (e) {
-                showBoxMsg("Erreur réseau. Vérifiez que WAMP est démarré.");
-                goToStep('step-pin-create', 'Sécurité');
+                showBoxMsg("Erreur réseau.");
             } finally {
                 btn.disabled = false;
             }

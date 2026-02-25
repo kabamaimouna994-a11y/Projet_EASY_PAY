@@ -11,11 +11,10 @@
         .header { background: var(--wave-orange); color: white; padding: 40px 20px; text-align: center; }
         .body { padding: 30px; flex-grow: 1; display: flex; flex-direction: column; justify-content: center; }
         .input-group { margin-bottom: 15px; }
-        label { display: block; font-size: 12px; font-weight: 600; margin-bottom: 5px; color: #666; }
-        input { width: 100%; padding: 14px; border: 2px solid #eee; border-radius: 12px; box-sizing: border-box; outline: none; }
+        label { display: block; font-size: 11px; font-weight: 600; margin-bottom: 5px; color: #666; text-transform: uppercase; }
+        input { width: 100%; padding: 14px; border: 2px solid #eee; border-radius: 12px; box-sizing: border-box; outline: none; font-size: 16px; }
         input:focus { border-color: var(--wave-orange); }
-        .btn-login { width: 100%; padding: 16px; background: var(--wave-orange); color: white; border: none; border-radius: 16px; font-weight: bold; cursor: pointer; margin-top: 10px; }
-        .btn-login:disabled { opacity: 0.6; }
+        .btn-login { width: 100%; padding: 16px; background: var(--wave-orange); color: white; border: none; border-radius: 16px; font-weight: bold; cursor: pointer; margin-top: 10px; font-size: 16px; }
         .back-link { margin-top: 20px; text-align: center; color: #999; cursor: pointer; font-size: 14px; border: none; background: none; width: 100%; }
         #alert-box { position: absolute; bottom: -70px; left: 20px; right: 20px; padding: 15px; border-radius: 15px; color: white; text-align: center; font-size: 12px; font-weight: 600; background: var(--danger); transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); z-index: 1000; }
         #alert-box.show { bottom: 20px; }
@@ -30,15 +29,15 @@
         </div>
         <div class="body">
             <div class="input-group">
-                <label>NOM DE L'ENTREPRISE</label>
+                <label>Nom de l'entreprise</label>
                 <input type="text" id="shop-name" placeholder="Ex: Boutique Alpha">
             </div>
             <div class="input-group">
-                <label>CODE PIN AGENT</label>
+                <label>Code PIN Agent</label>
                 <input type="password" id="shop-pin" maxlength="4" placeholder="••••">
             </div>
             <button class="btn-login" id="btn-login" onclick="loginMarchand()">Se connecter</button>
-            <button class="back-link" onclick="location.href='index.html'">← Retour</button>
+            <button class="back-link" onclick="location.href='index.html'">← Retour à l'accueil</button>
         </div>
     </div>
 
@@ -57,35 +56,29 @@
             const pin  = document.getElementById('shop-pin').value;
 
             if (!name || pin.length !== 4) {
-                msgBox("Veuillez entrer le nom de l'entreprise et un code PIN à 4 chiffres.");
+                msgBox("Veuillez remplir tous les champs.");
                 return;
             }
 
-            const btn = document.getElementById('btn-login');
-            btn.disabled = true;
-
             try {
-                const res  = await fetch(API_BASE + 'api_marchand.php', {
+                const res = await fetch(API_BASE + 'api_marchand.php', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ action: 'login', nom_boutique: name, pin })
+                    body: JSON.stringify({ action: 'login', nom_boutique: name, pin: pin })
                 });
                 const data = await res.json();
 
                 if (data.success) {
-                    // Sauvegarder les infos marchand en session (clés adaptées à easy_pay)
-                    sessionStorage.setItem('ep_id_marchand',         data.marchand.id_marchand);
-                    sessionStorage.setItem('ep_nom_boutique',        data.marchand.nom_boutique);
-                    sessionStorage.setItem('ep_marchand_fixed_name', data.marchand.merchant_fixed_name || '');
-                    sessionStorage.setItem('ep_marchand_fixed_code', data.marchand.merchant_fixed_code || '');
+                    sessionStorage.setItem('ep_id_marchand', data.marchand.id_marchand);
+                    sessionStorage.setItem('ep_nom_boutique', data.marchand.nom_boutique);
+                    sessionStorage.setItem('ep_marchand_fixed_name', data.marchand.merchant_fixed_name);
+                    sessionStorage.setItem('ep_marchand_fixed_code', data.marchand.merchant_fixed_code);
                     window.location.href = 'accueil_marchand.html';
                 } else {
-                    msgBox(data.message || "Erreur de connexion.");
+                    msgBox(data.message);
                 }
             } catch (e) {
-                msgBox("Erreur réseau. Vérifiez que WAMP est démarré.");
-            } finally {
-                btn.disabled = false;
+                msgBox("Erreur de connexion au serveur.");
             }
         }
     </script>

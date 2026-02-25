@@ -3,192 +3,200 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Administration EASY-PAY</title>
+    <title>EASY-PAY Admin</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        :root { --wave-orange: #ff8c00; --text-dark: #2c3e50; --bg-light: #f0f2f5; --danger: #e74c3c; }
-        body { margin: 0; font-family: 'Segoe UI', sans-serif; background: var(--bg-light); display: flex; flex-direction: column; align-items: center; min-height: 100vh; padding: 20px; box-sizing: border-box; }
+        :root { --wave-orange: #ff8c00; --text-dark: #2c3e50; --bg-light: #f0f2f5; --success: #27ae60; }
+        body { margin: 0; font-family: 'Segoe UI', sans-serif; background: var(--bg-light); display: flex; flex-direction: column; align-items: center; min-height: 100vh; padding: 20px; }
+
         .nav-header { width: 100%; max-width: 450px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
-        .logo { color: var(--wave-orange); font-weight: 800; font-size: 20px; }
-        .back-btn { background: white; border: 1px solid #ddd; padding: 8px 15px; border-radius: 12px; cursor: pointer; font-size: 13px; font-weight: 600; color: #666; }
-        .admin-card { background: white; padding: 30px; border-radius: 30px; box-shadow: 0 20px 50px rgba(0,0,0,0.1); width: 100%; max-width: 450px; text-align: center; box-sizing: border-box; position: relative; overflow: hidden; }
-        .input-group { text-align: left; margin-bottom: 15px; }
-        label { font-size: 11px; font-weight: bold; color: #666; margin-left: 5px; }
-        input { width: 100%; padding: 15px; margin-top: 5px; border: 2px solid #eee; border-radius: 15px; box-sizing: border-box; outline: none; font-size: 16px; }
-        input:focus { border-color: var(--wave-orange); }
-        .btn-save { width: 100%; padding: 16px; background: var(--wave-orange); color: white; border: none; border-radius: 16px; font-weight: bold; cursor: pointer; }
-        .btn-save:disabled { opacity: 0.6; }
-        .history-section { width: 100%; max-width: 450px; margin-top: 20px; background: white; border-radius: 25px; padding: 20px; box-shadow: 0 5px 20px rgba(0,0,0,0.05); box-sizing: border-box; display: none; }
-        .history-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 2px solid #f0f2f5; padding-bottom: 10px; }
-        .history-title { font-weight: 800; font-size: 16px; color: var(--text-dark); }
-        .refresh-btn { background: none; border: 1px solid var(--wave-orange); color: var(--wave-orange); padding: 4px 8px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 11px; }
-        #transactions-list { max-height: 300px; overflow-y: auto; padding-right: 5px; }
-        #transactions-list::-webkit-scrollbar { width: 4px; }
-        #transactions-list::-webkit-scrollbar-thumb { background: #eee; border-radius: 10px; }
-        .trans-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #f9f9f9; }
-        .trans-info { text-align: left; }
-        .trans-user { font-weight: 600; font-size: 14px; color: var(--text-dark); }
-        .trans-date { font-size: 11px; color: #aaa; }
-        .trans-amount { font-weight: 800; color: #2ecc71; }
-        #alert-box { position: absolute; bottom: -70px; left: 20px; right: 20px; padding: 15px; border-radius: 15px; color: white; text-align: center; font-size: 12px; font-weight: 600; background: var(--danger); transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); z-index: 1000; }
-        #alert-box.show { bottom: 20px; }
-        .hidden { display: none !important; }
-        @media print { .back-btn, .refresh-btn, .btn-save, .nav-header { display: none; } body { background: white; } .admin-card { box-shadow: none; } }
+        .logo { color: var(--wave-orange); font-weight: 800; font-size: 22px; }
+
+        /* LE BOX UNIQUE */
+        .main-box { 
+            background: white; 
+            width: 100%; 
+            max-width: 450px; 
+            height: 80vh; 
+            border-radius: 35px; 
+            box-shadow: 0 20px 50px rgba(0,0,0,0.1); 
+            display: flex; 
+            flex-direction: column; 
+            overflow: hidden; 
+            position: relative; /* Important pour le bouton flottant */
+        }
+
+        /* NAVIGATION DE RACCOURCIS */
+        .box-nav { 
+            display: flex; 
+            justify-content: space-around; 
+            padding: 15px; 
+            background: #fff; 
+            border-bottom: 1px solid #f0f0f0; 
+            z-index: 10;
+        }
+        .box-nav a { text-decoration: none; color: #888; font-size: 11px; font-weight: 700; transition: 0.3s; }
+        .box-nav a:hover { color: var(--wave-orange); }
+
+        /* ZONE DE SCROLL */
+        .box-content { flex: 1; overflow-y: auto; padding: 25px; scroll-behavior: smooth; }
+
+        .section { padding-bottom: 40px; border-bottom: 1px solid #f8f9fa; margin-bottom: 30px; }
+        .qr-area { text-align: center; }
+        .qr-area img { width: 180px; border: 10px solid #f9f9f9; border-radius: 20px; margin: 15px 0; }
+        
+        .total-card { background: var(--success); color: white; padding: 20px; border-radius: 20px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .trans-item { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #f9f9f9; }
+
+        /* BOUTON RETOUR EN HAUT (INTERNE) */
+        #btn-top {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            width: 40px;
+            height: 40px;
+            background: var(--text-dark);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            display: none; /* Caché par défaut */
+            font-size: 18px;
+            font-weight: bold;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+            z-index: 100;
+        }
+
+        .btn-print { width: 100%; padding: 14px; background: var(--text-dark); color: white; border: none; border-radius: 15px; font-weight: bold; cursor: pointer; }
     </style>
 </head>
 <body>
 
 <div class="nav-header">
     <div class="logo">EASY-PAY</div>
-    <button class="back-btn" onclick="logout()">← Déconnexion</button>
+    <button onclick="logout()" style="border:none; background:none; font-weight:700; color:#666; cursor:pointer;">Quitter</button>
 </div>
 
-<div class="admin-card">
-    <div id="alert-box"></div>
+<div class="main-box">
+    <div class="box-nav">
+        <a href="#sec-qr">MON QR</a>
+        <a href="#sec-stats">STATISTIQUES</a>
+        <a href="#sec-history">VENTES</a>
+    </div>
 
-    <div id="form-container">
-        <h3 style="margin-top:0; color: var(--text-dark);">Configurer votre QR Code</h3>
-        <p style="font-size: 13px; color: #666;">Ces informations seront figées après validation.</p>
-        <div class="input-group">
-            <label>NOM DU MARCHAND</label>
-            <input type="text" id="m-name" placeholder="Ex: Boutique Maïmouna">
+    <button id="btn-top" onclick="scrollToTop()">↑</button>
+
+    <div class="box-content" id="scroll-zone">
+        
+        <div id="sec-qr" class="section qr-area">
+            <h2 id="display-name" style="margin:0; font-size:20px;">Chargement...</h2>
+            <p id="display-code" style="color:#aaa; font-size:12px;">ID: --</p>
+            <img id="qr-img" src="" alt="QR">
+            <button class="btn-print" onclick="window.print()">Imprimer mon QR</button>
         </div>
-        <div class="input-group">
-            <label>ID DE PAIEMENT UNIQUE</label>
-            <input type="text" id="m-code" placeholder="Ex: MCH-9920">
+
+        <div id="sec-stats" class="section">
+            <h4 style="margin:0 0 15px 0; font-size:14px; color:var(--text-dark);">Analytique</h4>
+            <div class="total-card">
+                <span>TOTAL ENCAISSÉ</span>
+                <strong id="total-valeur">0 F</strong>
+            </div>
+            <canvas id="salesChart"></canvas>
         </div>
-        <button class="btn-save" id="btn-activer" onclick="saveMerchantData()">Activer le Terminal</button>
-    </div>
 
-    <div id="print-area" class="hidden">
-        <div style="font-weight:800; font-size:18px; color:var(--text-dark);" id="display-name"></div>
-        <div style="color:#aaa; font-size:13px;" id="display-code"></div>
-        <br>
-        <img id="qr-img" src="" alt="QR Code" style="width:200px; border: 8px solid #f9f9f9; border-radius:15px;">
-        <p style="font-size: 12px; color: #95a5a6; margin-top:10px;">Scannez pour payer</p>
-        <button class="btn-save" style="background:#2c3e50; margin-top:10px;" onclick="window.print()">Imprimer le support</button>
+        <div id="sec-history" class="section" style="border:none;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+                <h4 style="margin:0; font-size:14px;">Historique</h4>
+                <span onclick="loadData()" style="color:var(--wave-orange); cursor:pointer; font-size:11px; font-weight:bold;">ACTUALISER ↻</span>
+            </div>
+            <div id="transactions-list"></div>
+        </div>
     </div>
-</div>
-
-<div class="history-section" id="history-box">
-    <div class="history-header">
-        <span class="history-title">Paiements Reçus</span>
-        <button class="refresh-btn" onclick="loadTransactions()">Rafraîchir ↻</button>
-    </div>
-    <div id="transactions-list"></div>
 </div>
 
 <script>
-    const API_BASE   = 'http://localhost/Projet_easypay/';
-    const idMarchand = sessionStorage.getItem('ep_id_marchand');
+    const API_BASE = 'http://localhost/Projet_easypay/';
+    let myChart = null;
+    const scrollZone = document.getElementById('scroll-zone');
+    const btnTop = document.getElementById('btn-top');
 
-    if (!idMarchand) window.location.replace('marchand.html');
-
-    function msgBox(texte) {
-        const box = document.getElementById('alert-box');
-        box.innerText = texte;
-        box.classList.add('show');
-        setTimeout(() => { box.classList.remove('show'); }, 3000);
-    }
-
-    window.onload = function() {
-        const fixedName = sessionStorage.getItem('ep_marchand_fixed_name');
-        const fixedCode = sessionStorage.getItem('ep_marchand_fixed_code');
-        if (fixedName && fixedCode) {
-            showStaticDashboard(fixedName, fixedCode);
+    // Détection du scroll pour afficher le bouton "Haut"
+    scrollZone.onscroll = function() {
+        if (scrollZone.scrollTop > 200) {
+            btnTop.style.display = "block";
+        } else {
+            btnTop.style.display = "none";
         }
     };
 
-    async function saveMerchantData() {
-        const name = document.getElementById('m-name').value.trim();
-        const code = document.getElementById('m-code').value.trim().toUpperCase();
-
-        if (!name || !code) {
-            msgBox("Veuillez remplir tous les champs.");
-            return;
-        }
-
-        const btn = document.getElementById('btn-activer');
-        btn.disabled = true;
-
-        try {
-            const res  = await fetch(API_BASE + 'api_marchand.php', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    action:      'save_config',
-                    id_marchand: parseInt(idMarchand),
-                    fixed_name:  name,
-                    fixed_code:  code
-                })
-            });
-            const data = await res.json();
-
-            if (data.success) {
-                sessionStorage.setItem('ep_marchand_fixed_name', name);
-                sessionStorage.setItem('ep_marchand_fixed_code', code);
-                showStaticDashboard(name, code);
-            } else {
-                msgBox(data.message || "Erreur de sauvegarde.");
-            }
-        } catch (e) {
-            msgBox("Erreur réseau. Vérifiez WAMP.");
-        } finally {
-            btn.disabled = false;
-        }
+    function scrollToTop() {
+        scrollZone.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
-    function showStaticDashboard(name, code) {
-        document.getElementById('form-container').classList.add('hidden');
+    window.onload = function() {
+        const name = sessionStorage.getItem('ep_marchand_fixed_name');
+        const code = sessionStorage.getItem('ep_marchand_fixed_code');
+        if(!code) window.location.href = 'marchand.html';
         document.getElementById('display-name').innerText = name;
         document.getElementById('display-code').innerText = "ID: " + code;
-        document.getElementById('qr-img').src = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${code}`;
-        document.getElementById('print-area').classList.remove('hidden');
-        document.getElementById('history-box').style.display = 'block';
-        loadTransactions();
-    }
+        document.getElementById('qr-img').src = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${code}`;
+        loadData();
+    };
 
-    async function loadTransactions() {
-        const list        = document.getElementById('transactions-list');
-        const merchantCode = sessionStorage.getItem('ep_marchand_fixed_code');
-
-        if (!merchantCode) {
-            list.innerHTML = "<p style='color:#aaa; font-size:13px; padding:20px;'>Activez d'abord votre terminal.</p>";
-            return;
-        }
-
+    async function loadData() {
+        const mCode = sessionStorage.getItem('ep_marchand_fixed_code');
         try {
-            const res  = await fetch(API_BASE + 'api_marchand.php', {
+            const res = await fetch(API_BASE + 'api_marchand.php', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ action: 'historique', merchant_code: merchantCode })
+                body: JSON.stringify({ action: 'historique', merchant_code: mCode })
             });
             const data = await res.json();
-
-            if (!data.success || data.transactions.length === 0) {
-                list.innerHTML = "<p style='color:#aaa; font-size:13px; padding:20px;'>Aucun paiement reçu.</p>";
-                return;
+            if (data.success) {
+                renderTransactions(data.transactions);
+                renderChart(data.transactions);
             }
-
-            list.innerHTML = "";
-            data.transactions.forEach(t => {
-                list.innerHTML += `
-                    <div class="trans-item">
-                        <div class="trans-info">
-                            <div class="trans-user">${t.client_name}</div>
-                            <div class="trans-date">${t.date}</div>
-                        </div>
-                        <div class="trans-amount">+ ${t.amount} FCFA</div>
-                    </div>`;
-            });
-        } catch (e) {
-            list.innerHTML = "<p style='color:#e74c3c; font-size:13px; padding:20px;'>Erreur de chargement.</p>";
-        }
+        } catch (e) { console.error("Erreur"); }
     }
 
-    function logout() {
-        sessionStorage.clear();
-        window.location.href = 'index.html';
+    function renderTransactions(transactions) {
+        const list = document.getElementById('transactions-list');
+        let total = 0;
+        list.innerHTML = transactions.map(t => {
+            total += parseFloat(t.amount);
+            return `<div class="trans-item">
+                <div style="text-align:left">
+                    <div style="font-weight:700; font-size:13px;">${t.client_name}</div>
+                    <div style="font-size:10px; color:#aaa;">${t.date}</div>
+                </div>
+                <div style="font-weight:800; color:var(--success); font-size:14px;">+ ${parseFloat(t.amount).toLocaleString()} F</div>
+            </div>`;
+        }).join('');
+        document.getElementById('total-valeur').innerText = total.toLocaleString() + " F";
     }
+
+    function renderChart(transactions) {
+        const dataRev = [...transactions].reverse();
+        const ctx = document.getElementById('salesChart').getContext('2d');
+        if(myChart) myChart.destroy();
+        myChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: dataRev.map(t => t.date.split(' ')[1]),
+                datasets: [{ 
+                    data: dataRev.map(t => t.amount), 
+                    borderColor: '#ff8c00', 
+                    fill: true, 
+                    backgroundColor: 'rgba(255, 140, 0, 0.1)', 
+                    tension: 0.4,
+                    borderWidth: 2
+                }]
+            },
+            options: { plugins: { legend: { display: false } } }
+        });
+    }
+
+    function logout() { sessionStorage.clear(); window.location.href = 'index.html'; }
 </script>
 </body>
 </html>

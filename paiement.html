@@ -21,7 +21,8 @@
         #alert.show { bottom: 30px; }
         .input-group { margin-bottom: 15px; }
         label { display: block; font-weight: 600; color: #7f8c8d; margin-bottom: 5px; font-size: 11px; }
-        input { width: 100%; padding: 14px; border: 2px solid #edf0f2; border-radius: 12px; box-sizing: border-box; font-size: 16px; }
+        input { width: 100%; padding: 14px; border: 2px solid #edf0f2; border-radius: 12px; box-sizing: border-box; font-size: 16px; outline: none; }
+        input:focus { border-color: var(--wave-blue); }
         .shop-display { background: var(--wave-light); padding: 10px; border-radius: 12px; text-align: center; margin-bottom: 15px; display: none; border: 1px dashed var(--wave-blue); }
         .btn-pay { width: 100%; padding: 16px; background: var(--wave-blue); color: white; border: none; border-radius: 16px; font-weight: bold; cursor: pointer; }
         #pin-screen, #receipt-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: none; flex-direction: column; align-items: center; z-index: 100; background: white; }
@@ -48,16 +49,19 @@
             </div>
             <div class="body">
                 <div class="services-grid">
-                    <div class="service-item" onclick="selectService('ABC12346', 'BOULANGERIE PAUL')"><span>🥐</span>Boulangerie</div>
-                    <div class="service-item" onclick="selectService('RECH-TEL', 'RECHARGE CRÉDIT')"><span>📱</span>Crédit Tel</div>
-                    <div class="service-item" onclick="selectService('99887766EL', 'CIE ÉLECTRICITÉ')"><span>💡</span>Électricité</div>
-                    <div class="service-item" onclick="selectService('11223344EA', 'SODECI EAU')"><span>💧</span>Eau</div>
+                    <div class="service-item" onclick="selectService('ABC12346')"><span>🥐</span>Boulangerie</div>
+                    <div class="service-item" onclick="selectService('RECH-TEL')"><span>📱</span>Crédit Tel</div>
+                    <div class="service-item" onclick="selectService('99887766EL')"><span>💡</span>Électricité</div>
+                    <div class="service-item" onclick="selectService('11223344EA')"><span>💧</span>Eau</div>
                 </div>
                 <div id="reader"></div>
                 <button id="btn-scan" class="scanner-btn" onclick="initScanner()">📷 SCANNER UN CODE QR</button>
+                
                 <div id="shop-info" class="shop-display">
-                    <small style="color:var(--wave-blue)">DESTINATAIRE</small><br><strong id="target-shop"></strong>
+                    <small style="color:var(--wave-blue)">DESTINATAIRE TROUVÉ</small><br>
+                    <strong id="target-shop"></strong>
                 </div>
+
                 <div class="input-group">
                     <label>Code Marchand</label>
                     <input type="text" id="merchant-code" placeholder="Ex: ABC12346" oninput="verifierCode()">
@@ -98,14 +102,13 @@
 
     <script>
         const API_BASE = 'http://localhost/Projet_easypay/';
-        const MARCHANDS = { "ABC12346": "BOULANGERIE PAUL", "RECH-TEL": "RECHARGE CRÉDIT", "99887766EL": "CIE ÉLECTRICITÉ", "11223344EA": "SODECI EAU" };
-        let pinSaisi    = "";
+        let pinSaisi = "";
         let scanner;
         let isProcessing = false;
+        let currentMerchantName = ""; // Stocke le nom trouvé dynamiquement
 
-        // Clés de session adaptées à easy_pay
         const idUser = parseInt(sessionStorage.getItem('ep_id_user'));
-        let   solde  = parseFloat(sessionStorage.getItem('ep_solde')) || 0;
+        let solde = parseFloat(sessionStorage.getItem('ep_solde')) || 0;
 
         if (!idUser) window.location.replace('index.html');
 
@@ -117,16 +120,39 @@
             setTimeout(() => a.classList.remove('show'), 2500);
         }
 
-        function verifierCode() {
-            const c    = document.getElementById('merchant-code').value.toUpperCase();
+        // --- NOUVELLE FONCTION DYNAMIQUE ---
+        async function verifierCode() {
+            const code = document.getElementById('merchant-code').value.toUpperCase();
             const info = document.getElementById('shop-info');
-            if (MARCHANDS[c]) {
-                document.getElementById('target-shop').innerText = MARCHANDS[c];
-                info.style.display = "block";
-                return true;
+            const target = document.getElementById('target-shop');
+
+            if (code.length < 3) {
+                info.style.display = "none";
+                currentMerchantName = "";
+                return false;
             }
-            info.style.display = "none";
-            return false;
+
+            try {
+                const res = await fetch(API_BASE + 'api_paiement.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'check_merchant', merchant_code: code })
+                });
+                const data = await res.json();
+
+                if (data.success) {
+                    currentMerchantName = data.nom_boutique;
+                    target.innerText = data.nom_boutique;
+                    info.style.display = "block";
+                    return true;
+                } else {
+                    info.style.display = "none";
+                    currentMerchantName = "";
+                    return false;
+                }
+            } catch (e) {
+                return false;
+            }
         }
 
         async function initScanner() {
@@ -136,8 +162,14 @@
             await scanner.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 }, (text) => {
                 document.getElementById('merchant-code').value = text;
                 stopScanner();
-                const exist = verifierCode();
-                if (exist) { notify("Code détecté ! Entrez le montant.", false); document.getElementById('amount').focus(); }
+                verifierCode().then(found => {
+                    if (found) { 
+                        notify("Marchand identifié !", false); 
+                        document.getElementById('amount').focus(); 
+                    } else {
+                        notify("QR Code inconnu", true);
+                    }
+                });
             });
         }
 
@@ -148,25 +180,28 @@
             });
         }
 
-        function selectService(code, name) {
+        function selectService(code) {
             document.getElementById('merchant-code').value = code;
-            verifierCode();
-            document.getElementById('amount').focus();
+            verifierCode().then(() => {
+                document.getElementById('amount').focus();
+            });
         }
 
         function ouvrirPin() {
-            const c   = document.getElementById('merchant-code').value.toUpperCase();
             const mnt = parseFloat(document.getElementById('amount').value);
-            if (!MARCHANDS[c]) return notify("Marchand inconnu", true);
+            if (!currentMerchantName) return notify("Veuillez saisir un code marchand valide", true);
             if (!mnt || mnt <= 0) return notify("Entrez un montant", true);
             if (mnt > solde) return notify("Solde insuffisant", true);
-            pinSaisi = ""; updateDots();
+            
+            pinSaisi = ""; 
+            updateDots();
             document.getElementById('pin-screen').style.display = 'flex';
         }
 
         function press(n) {
             if (pinSaisi.length < 4) {
-                pinSaisi += n; updateDots();
+                pinSaisi += n; 
+                updateDots();
                 if (pinSaisi.length === 4) setTimeout(validerFinal, 300);
             }
         }
@@ -180,39 +215,38 @@
             if (isProcessing) return;
             isProcessing = true;
 
-            const mnt  = parseFloat(document.getElementById('amount').value);
+            const mnt = parseFloat(document.getElementById('amount').value);
             const code = document.getElementById('merchant-code').value.toUpperCase();
 
             try {
-                const res  = await fetch(API_BASE + 'api_paiement.php', {
+                const res = await fetch(API_BASE + 'api_paiement.php', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        id_user:       idUser,
-                        pin:           pinSaisi,
+                        id_user: idUser,
+                        pin: pinSaisi,
                         merchant_code: code,
-                        merchant_name: MARCHANDS[code],
-                        montant:       mnt
+                        merchant_name: currentMerchantName, // Envoie le nom récupéré dynamiquement
+                        montant: mnt
                     })
                 });
                 const data = await res.json();
 
                 if (data.success) {
-                    // Mettre à jour le solde en session
                     solde = data.nouveau_solde;
                     sessionStorage.setItem('ep_solde', solde);
 
-                    document.getElementById('rec-amt').innerText  = mnt.toLocaleString() + " F CFA";
-                    document.getElementById('rec-dest').innerText = MARCHANDS[code];
+                    document.getElementById('rec-amt').innerText = mnt.toLocaleString() + " F CFA";
+                    document.getElementById('rec-dest').innerText = currentMerchantName;
                     document.getElementById('rec-date').innerText = data.date;
-                    document.getElementById('rec-id').innerText   = data.ref;
+                    document.getElementById('rec-id').innerText = data.ref;
                     document.getElementById('receipt-overlay').style.display = 'flex';
                 } else {
-                    notify(data.message || "Erreur PIN", true);
+                    notify(data.message || "Erreur lors du paiement", true);
                     pinSaisi = ""; updateDots();
                 }
             } catch (e) {
-                notify("Erreur réseau. Vérifiez WAMP.", true);
+                notify("Erreur réseau. Vérifiez votre connexion.", true);
                 pinSaisi = ""; updateDots();
             } finally {
                 isProcessing = false;
