@@ -1,12 +1,13 @@
 <?php
 // ============================================
-// db.php - Connexion à la base de données easy_pay
+// db.php - Connexion à la base de données EASY-PAY (Version Hostinger)
 // ============================================
 
-define('DB_HOST', 'localhost');
-define('DB_USER', 'root');       // Utilisateur WAMP par défaut
-define('DB_PASS', '');           // Mot de passe WAMP (vide par défaut)
-define('DB_NAME', 'easy_pay');   // Nom de ta BDD existante
+// Identifiants exacts de ton interface Hostinger
+define('DB_HOST', 'localhost'); 
+define('DB_USER', 'u241547498_usr_BHeKNNRN'); // Ton utilisateur actuel
+define('DB_NAME', 'u241547498_db_BHeKNNRN');  // Ta base de données actuelle
+define('DB_PASS', '!$@a=YbQ1e');               // Ton mot de passe actuel
 
 function getDB() {
     static $pdo = null;
@@ -24,13 +25,14 @@ function getDB() {
             );
         } catch (PDOException $e) {
             http_response_code(500);
-            die(json_encode(['success' => false, 'message' => 'Erreur de connexion BDD: ' . $e->getMessage()]));
+            echo json_encode(['success' => false, 'message' => 'Erreur de connexion BDD: ' . $e->getMessage()]);
+            exit();
         }
     }
     return $pdo;
 }
 
-// Headers pour les requêtes fetch depuis le HTML
+// Headers indispensables pour le fonctionnement de ton application mobile
 header('Content-Type: application/json');
 header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: POST, GET, OPTIONS');
@@ -41,7 +43,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit();
 }
 
-// Helper : lire le body JSON
+// Helper pour lire les données JSON envoyées par le JavaScript
 function getJsonBody() {
     return json_decode(file_get_contents('php://input'), true) ?? [];
 }

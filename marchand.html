@@ -1,86 +1,452 @@
 <!DOCTYPE html>
 <html lang="fr">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>EASY-PAY - Connexion Marchand</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap"
+        rel="stylesheet">
     <style>
-        :root { --wave-orange: #ff8c00; --text-dark: #2c3e50; --danger: #e74c3c; }
-        body { margin: 0; font-family: 'Segoe UI', sans-serif; background: #f0f2f5; display: flex; justify-content: center; align-items: center; height: 100vh; }
-        .portal-card { width: 90%; max-width: 380px; height: 500px; background: white; border-radius: 30px; box-shadow: 0 20px 50px rgba(0,0,0,0.1); display: flex; flex-direction: column; overflow: hidden; position: relative; }
-        .header { background: var(--wave-orange); color: white; padding: 40px 20px; text-align: center; }
-        .body { padding: 30px; flex-grow: 1; display: flex; flex-direction: column; justify-content: center; }
-        .input-group { margin-bottom: 15px; }
-        label { display: block; font-size: 11px; font-weight: 600; margin-bottom: 5px; color: #666; text-transform: uppercase; }
-        input { width: 100%; padding: 14px; border: 2px solid #eee; border-radius: 12px; box-sizing: border-box; outline: none; font-size: 16px; }
-        input:focus { border-color: var(--wave-orange); }
-        .btn-login { width: 100%; padding: 16px; background: var(--wave-orange); color: white; border: none; border-radius: 16px; font-weight: bold; cursor: pointer; margin-top: 10px; font-size: 16px; }
-        .back-link { margin-top: 20px; text-align: center; color: #999; cursor: pointer; font-size: 14px; border: none; background: none; width: 100%; }
-        #alert-box { position: absolute; bottom: -70px; left: 20px; right: 20px; padding: 15px; border-radius: 15px; color: white; text-align: center; font-size: 12px; font-weight: 600; background: var(--danger); transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); z-index: 1000; }
-        #alert-box.show { bottom: 20px; }
+        :root {
+            --orange: #ff8c00;
+            --orange-dark: #e07800;
+            --text: #2c3e50;
+            --muted: #8892a0;
+            --light: #f4f6fb;
+            --danger: #e74c3c;
+            --border: #e8ecf2;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background: var(--light);
+            min-height: 100vh;
+            display: flex;
+            overflow: hidden;
+        }
+
+        .left-panel {
+            width: 45%;
+            background: linear-gradient(145deg, #ff8c00 0%, #ffb347 50%, #e07800 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 60px 70px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .left-panel::before {
+            content: '';
+            position: absolute;
+            top: -100px;
+            right: -100px;
+            width: 400px;
+            height: 400px;
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 50%;
+        }
+
+        .left-panel::after {
+            content: '';
+            position: absolute;
+            bottom: -80px;
+            left: -80px;
+            width: 300px;
+            height: 300px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 50%;
+        }
+
+        .logo {
+            font-family: 'Syne', sans-serif;
+            font-weight: 800;
+            font-size: 28px;
+            color: white;
+            letter-spacing: 3px;
+            z-index: 1;
+        }
+
+        .hero {
+            z-index: 1;
+        }
+
+        .hero h1 {
+            font-family: 'Syne', sans-serif;
+            font-weight: 800;
+            font-size: 50px;
+            color: white;
+            line-height: 1.1;
+            margin-bottom: 20px;
+        }
+
+        .hero p {
+            font-size: 17px;
+            color: rgba(255, 255, 255, 0.8);
+            line-height: 1.7;
+            max-width: 360px;
+        }
+
+        .stats-row {
+            display: flex;
+            gap: 20px;
+            z-index: 1;
+        }
+
+        .stat-box {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            padding: 18px 22px;
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            flex: 1;
+        }
+
+        .stat-box .val {
+            font-family: 'Syne', sans-serif;
+            font-size: 20px;
+            color: white;
+            font-weight: 700;
+        }
+
+        .stat-box .lbl {
+            font-size: 11px;
+            color: rgba(255, 255, 255, 0.65);
+            margin-top: 3px;
+        }
+
+        .right-panel {
+            flex: 1;
+            background: white;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 60px 80px;
+            position: relative;
+        }
+
+        .form-box {
+            width: 100%;
+            max-width: 420px;
+        }
+
+        .form-title {
+            font-family: 'Syne', sans-serif;
+            font-size: 30px;
+            font-weight: 700;
+            color: var(--text);
+            margin-bottom: 8px;
+        }
+
+        .form-sub {
+            font-size: 14px;
+            color: var(--muted);
+            margin-bottom: 40px;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            font-size: 11px;
+            font-weight: 500;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+        }
+
+        input {
+            width: 100%;
+            padding: 15px 20px;
+            border: 2px solid var(--border);
+            border-radius: 14px;
+            font-size: 15px;
+            font-family: 'DM Sans', sans-serif;
+            outline: none;
+            background: var(--light);
+            transition: 0.2s;
+        }
+
+        input:focus {
+            border-color: var(--orange);
+            background: white;
+        }
+
+        .hint {
+            font-size: 11px;
+            color: var(--muted);
+            margin-top: 5px;
+        }
+
+        .btn-login {
+            width: 100%;
+            padding: 17px;
+            background: var(--orange);
+            color: white;
+            border: none;
+            border-radius: 14px;
+            font-family: 'Syne', sans-serif;
+            font-weight: 700;
+            font-size: 16px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .btn-login:hover {
+            background: var(--orange-dark);
+            transform: translateY(-1px);
+        }
+
+        .btn-login:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .back-link {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 14px;
+            color: var(--muted);
+            cursor: pointer;
+            border: none;
+            background: none;
+            width: 100%;
+            font-family: 'DM Sans', sans-serif;
+        }
+
+        .back-link:hover {
+            color: var(--orange);
+        }
+
+        .toast {
+            position: absolute;
+            bottom: -80px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--danger);
+            color: white;
+            padding: 14px 28px;
+            border-radius: 30px;
+            font-size: 13px;
+            font-weight: 500;
+            transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            white-space: nowrap;
+            z-index: 1000;
+        }
+
+        .toast.show {
+            bottom: 30px;
+        }
+
+        /* ══════════════════════════════════════
+           RESPONSIVE — TABLETTE  (≤ 900px)
+        ══════════════════════════════════════ */
+        @media screen and (max-width: 900px) {
+            body {
+                flex-direction: column;
+                overflow: auto;
+            }
+
+            .left-panel {
+                width: 100%;
+                padding: 30px 24px 24px;
+                min-height: auto;
+            }
+
+            .hero h1 {
+                font-size: 32px;
+            }
+
+            .hero p {
+                font-size: 14px;
+                max-width: 100%;
+            }
+
+            .stats-row {
+                gap: 12px;
+            }
+
+            .right-panel {
+                border-radius: 24px 24px 0 0;
+                padding: 36px 32px 48px;
+                min-height: 65vh;
+                justify-content: flex-start;
+            }
+
+            .form-box {
+                max-width: 100%;
+            }
+        }
+
+        /* ══════════════════════════════════════
+           RESPONSIVE — MOBILE  (≤ 480px)
+        ══════════════════════════════════════ */
+        @media screen and (max-width: 480px) {
+            .left-panel {
+                padding: 24px 18px 20px;
+            }
+
+            .logo {
+                font-size: 22px;
+            }
+
+            .hero h1 {
+                font-size: 24px;
+                margin-bottom: 10px;
+            }
+
+            .hero p {
+                font-size: 13px;
+            }
+
+            .stat-box .val {
+                font-size: 16px;
+            }
+
+            .right-panel {
+                padding: 28px 18px 40px;
+                border-radius: 20px 20px 0 0;
+            }
+
+            .form-title {
+                font-size: 24px;
+            }
+
+            input {
+                padding: 13px 15px;
+                font-size: 14px;
+            }
+
+            .btn-login {
+                padding: 15px;
+                font-size: 15px;
+            }
+
+            .toast {
+                max-width: 90vw;
+                text-align: center;
+                white-space: normal;
+                font-size: 12px;
+            }
+        }
     </style>
 </head>
+
 <body>
-    <div class="portal-card">
-        <div id="alert-box"></div>
-        <div class="header">
-            <h2 style="margin:0">EASY-PAY</h2>
-            <p style="font-size:14px; opacity:0.8">Accès Marchand</p>
+    <div class="left-panel">
+        <div class="logo">EASY-PAY</div>
+        <div class="hero">
+            <h1>Espace Marchand.</h1>
+            <p>Gérez votre boutique, suivez vos encaissements et accédez à votre QR code de paiement.</p>
         </div>
-        <div class="body">
+        <div class="stats-row">
+            <div class="stat-box">
+                <div class="val">QR Code</div>
+                <div class="lbl">Partageable</div>
+            </div>
+            <div class="stat-box">
+                <div class="val">Analytique</div>
+                <div class="lbl">En temps réel</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="right-panel">
+        <div class="toast" id="alert-box"></div>
+        <div class="form-box">
+            <div class="form-title">Connexion Marchand</div>
+            <div class="form-sub">Accédez à votre espace de gestion</div>
+
             <div class="input-group">
                 <label>Nom de l'entreprise</label>
-                <input type="text" id="shop-name" placeholder="Ex: Boutique Alpha">
+                <!-- API strtoupper() le nom → la saisie est forcée en majuscules -->
+                <input type="text" id="shop-name" placeholder="Ex: BOUTIQUE ALPHA" style="text-transform:uppercase;">
+                <div class="hint">Saisissez le nom exactement tel qu'il a été enregistré (majuscules)</div>
             </div>
             <div class="input-group">
                 <label>Code PIN Agent</label>
-                <input type="password" id="shop-pin" maxlength="4" placeholder="••••">
+                <input type="password" id="shop-pin" maxlength="4" placeholder="••••"
+                    style="text-align:center;font-size:24px;letter-spacing:12px;">
             </div>
-            <button class="btn-login" id="btn-login" onclick="loginMarchand()">Se connecter</button>
+            <button class="btn-login" id="btn-login" onclick="loginMarchand()">Se connecter →</button>
             <button class="back-link" onclick="location.href='index.html'">← Retour à l'accueil</button>
         </div>
     </div>
 
     <script>
-        const API_BASE = 'http://localhost/Projet_easypay/';
+        // ============================================================
+        // ALIGNEMENT AVEC api_marchand.php (action = login)
+        // Envoi  : { action: 'login', nom_boutique (UPPER), pin }
+        // Reçoit : { success, marchand: { id_marchand, nom_boutique,
+        //            merchant_fixed_name, merchant_fixed_code } }
+        // Stockage session : ep_id_marchand, ep_nom_boutique,
+        //                    ep_marchand_fixed_name, ep_marchand_fixed_code
+        // ============================================================
+        const API_BASE = 'https://snow-panther-442077.hostingersite.com/';
 
         function msgBox(texte) {
             const box = document.getElementById('alert-box');
             box.innerText = texte;
             box.classList.add('show');
-            setTimeout(() => { box.classList.remove('show'); }, 3000);
+            setTimeout(() => box.classList.remove('show'), 3000);
         }
 
         async function loginMarchand() {
-            const name = document.getElementById('shop-name').value.trim();
-            const pin  = document.getElementById('shop-pin').value;
+            // L'API fait strtoupper() → on force aussi côté JS pour cohérence
+            const name = document.getElementById('shop-name').value.trim().toUpperCase();
+            const pin = document.getElementById('shop-pin').value;
+            const btn = document.getElementById('btn-login');
 
             if (!name || pin.length !== 4) {
                 msgBox("Veuillez remplir tous les champs.");
                 return;
             }
 
+            btn.disabled = true;
             try {
                 const res = await fetch(API_BASE + 'api_marchand.php', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
+                    // API attend : { action: 'login', nom_boutique, pin }
                     body: JSON.stringify({ action: 'login', nom_boutique: name, pin: pin })
                 });
                 const data = await res.json();
 
                 if (data.success) {
+                    // API retourne : marchand.{ id_marchand, nom_boutique, merchant_fixed_name, merchant_fixed_code }
                     sessionStorage.setItem('ep_id_marchand', data.marchand.id_marchand);
                     sessionStorage.setItem('ep_nom_boutique', data.marchand.nom_boutique);
                     sessionStorage.setItem('ep_marchand_fixed_name', data.marchand.merchant_fixed_name);
                     sessionStorage.setItem('ep_marchand_fixed_code', data.marchand.merchant_fixed_code);
                     window.location.href = 'accueil_marchand.html';
                 } else {
-                    msgBox(data.message);
+                    msgBox(data.message || "Identifiants invalides.");
                 }
             } catch (e) {
-                msgBox("Erreur de connexion au serveur.");
+                msgBox("Erreur de connexion au serveur. Vérifiez WAMP.");
+            } finally {
+                btn.disabled = false;
             }
         }
+
+        // Permettre la validation avec Entrée
+        document.addEventListener('keydown', e => {
+            if (e.key === 'Enter') loginMarchand();
+        });
     </script>
 </body>
+
 </html>

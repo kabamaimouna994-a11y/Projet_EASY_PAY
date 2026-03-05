@@ -1,53 +1,604 @@
 <!DOCTYPE html>
 <html lang="fr">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>EASY-PAY - Scan & Pay</title>
     <script src="https://unpkg.com/html5-qrcode"></script>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap"
+        rel="stylesheet">
     <style>
-        :root { --wave-blue: #4c4dfc; --wave-light: #f4f6ff; --danger: #e74c3c; --success: #2ecc71; }
-        body { margin: 0; font-family: 'Segoe UI', sans-serif; background-color: #eef1f7; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; }
-        .card { width: 90%; max-width: 380px; height: 620px; background: white; border-radius: 30px; position: relative; overflow-y: auto; box-shadow: 0 20px 40px rgba(0,0,0,0.1); }
-        .header { background: var(--wave-blue); color: white; padding: 20px; display: flex; align-items: center; gap: 15px; position: sticky; top: 0; z-index: 10; }
-        .back-btn { text-decoration: none; color: white; font-size: 24px; cursor: pointer; border: none; background: none; }
-        .body { padding: 20px 25px; }
-        .services-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
-        .service-item { background: #f8f9fa; padding: 12px; border-radius: 15px; text-align: center; cursor: pointer; border: 2px solid transparent; transition: 0.2s; font-size: 12px; font-weight: 600; }
-        .service-item span { font-size: 20px; display: block; margin-bottom: 4px; }
-        #reader { width: 100%; border-radius: 18px; overflow: hidden; display: none; margin-bottom: 20px; border: 2px solid var(--wave-blue); }
-        .scanner-btn { width: 100%; height: 55px; background: #1a1a1a; border-radius: 18px; display: flex; justify-content: center; align-items: center; color: white; cursor: pointer; margin-bottom: 20px; font-weight: bold; border: none; }
-        #alert { position: fixed; bottom: -80px; left: 50%; transform: translateX(-50%); width: 80%; padding: 15px; border-radius: 15px; color: white; text-align: center; z-index: 1000; transition: 0.5s; }
-        #alert.show { bottom: 30px; }
-        .input-group { margin-bottom: 15px; }
-        label { display: block; font-weight: 600; color: #7f8c8d; margin-bottom: 5px; font-size: 11px; }
-        input { width: 100%; padding: 14px; border: 2px solid #edf0f2; border-radius: 12px; box-sizing: border-box; font-size: 16px; outline: none; }
-        input:focus { border-color: var(--wave-blue); }
-        .shop-display { background: var(--wave-light); padding: 10px; border-radius: 12px; text-align: center; margin-bottom: 15px; display: none; border: 1px dashed var(--wave-blue); }
-        .btn-pay { width: 100%; padding: 16px; background: var(--wave-blue); color: white; border: none; border-radius: 16px; font-weight: bold; cursor: pointer; }
-        #pin-screen, #receipt-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: none; flex-direction: column; align-items: center; z-index: 100; background: white; }
-        #pin-screen { justify-content: center; }
-        #receipt-overlay { padding-top: 50px; text-align: center; }
-        .receipt-amt { font-size: 32px; font-weight: 800; color: var(--wave-blue); margin: 10px 0; }
-        .receipt-details { width: 80%; border-top: 1px solid #eee; margin: 20px auto; padding-top: 20px; text-align: left; }
-        .receipt-row { display: flex; justify-content: space-between; margin-bottom: 12px; font-size: 14px; }
-        .pin-dots { display: flex; gap: 15px; margin: 25px 0; }
-        .dot { width: 14px; height: 14px; border: 2px solid #ddd; border-radius: 50%; }
-        .dot.active { background: var(--wave-blue); border-color: var(--wave-blue); }
-        .numpad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; }
-        .num-btn { width: 60px; height: 60px; border-radius: 50%; border: none; background: #f8f9fa; font-size: 20px; font-weight: bold; cursor: pointer; }
+        :root {
+            --blue: #4c4dfc;
+            --orange: #ff8c00;
+            --text: #2c3e50;
+            --muted: #8892a0;
+            --light: #f4f6fb;
+            --danger: #e74c3c;
+            --success: #2ecc71;
+            --border: #e8ecf2;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background: var(--light);
+            min-height: 100vh;
+            display: flex;
+        }
+
+        .sidebar {
+            width: 280px;
+            background: linear-gradient(160deg, #4c4dfc, #3435d4);
+            display: flex;
+            flex-direction: column;
+            padding: 40px 30px;
+            flex-shrink: 0;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .sidebar::before {
+            content: '';
+            position: absolute;
+            top: -60px;
+            right: -60px;
+            width: 200px;
+            height: 200px;
+            background: rgba(255, 255, 255, 0.07);
+            border-radius: 50%;
+        }
+
+        .logo {
+            font-family: 'Syne', sans-serif;
+            font-weight: 800;
+            font-size: 22px;
+            color: white;
+            letter-spacing: 3px;
+            margin-bottom: 50px;
+            z-index: 1;
+        }
+
+        .nav-menu {
+            flex: 1;
+            z-index: 1;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 14px 16px;
+            border-radius: 14px;
+            cursor: pointer;
+            color: rgba(255, 255, 255, 0.65);
+            font-weight: 500;
+            font-size: 15px;
+            transition: 0.2s;
+            margin-bottom: 8px;
+            text-decoration: none;
+        }
+
+        .nav-item:hover {
+            background: rgba(255, 255, 255, 0.12);
+            color: white;
+        }
+
+        .nav-item.active {
+            background: rgba(255, 255, 255, 0.18);
+            color: white;
+        }
+
+        .nav-icon {
+            font-size: 20px;
+            width: 24px;
+            text-align: center;
+        }
+
+        .info-card {
+            z-index: 1;
+            background: rgba(255, 255, 255, 0.12);
+            border-radius: 18px;
+            padding: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            margin-top: 20px;
+        }
+
+        .info-card h4 {
+            font-family: 'Syne', sans-serif;
+            color: white;
+            font-size: 14px;
+            margin-bottom: 8px;
+        }
+
+        .info-card p {
+            color: rgba(255, 255, 255, 0.65);
+            font-size: 12px;
+            line-height: 1.6;
+        }
+
+        .main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .topbar {
+            background: white;
+            padding: 25px 40px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .back-btn {
+            color: var(--blue);
+            font-size: 18px;
+            cursor: pointer;
+            text-decoration: none;
+            font-weight: 600;
+            border: none;
+            background: none;
+            font-family: 'DM Sans', sans-serif;
+        }
+
+        .topbar h1 {
+            font-family: 'Syne', sans-serif;
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--text);
+        }
+
+        .content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 35px 40px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            align-items: start;
+        }
+
+        .panel {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            border: 1px solid var(--border);
+        }
+
+        .panel-title {
+            font-family: 'Syne', sans-serif;
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--text);
+            margin-bottom: 20px;
+        }
+
+        .services-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .service-item {
+            background: var(--light);
+            padding: 16px 12px;
+            border-radius: 14px;
+            text-align: center;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: 0.2s;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text);
+        }
+
+        .service-item:hover {
+            border-color: var(--blue);
+            background: white;
+        }
+
+        .service-item span {
+            font-size: 24px;
+            display: block;
+            margin-bottom: 6px;
+        }
+
+        #reader {
+            width: 100%;
+            border-radius: 14px;
+            overflow: hidden;
+            display: none;
+            margin-bottom: 15px;
+            border: 2px solid var(--blue);
+        }
+
+        .scanner-btn {
+            width: 100%;
+            padding: 14px;
+            background: #1a1a1a;
+            border-radius: 14px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            cursor: pointer;
+            margin-bottom: 20px;
+            font-weight: 700;
+            border: none;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 14px;
+            gap: 8px;
+        }
+
+        .scanner-btn:hover {
+            background: #333;
+        }
+
+        .shop-display {
+            background: #f0f4ff;
+            padding: 12px 18px;
+            border-radius: 12px;
+            text-align: center;
+            margin-bottom: 15px;
+            display: none;
+            border: 1px dashed var(--blue);
+        }
+
+        .shop-display small {
+            font-size: 10px;
+            color: var(--blue);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .shop-display strong {
+            display: block;
+            font-family: 'Syne', sans-serif;
+            font-size: 16px;
+            color: var(--text);
+            margin-top: 3px;
+        }
+
+        .input-group {
+            margin-bottom: 18px;
+        }
+
+        label {
+            display: block;
+            font-size: 11px;
+            font-weight: 500;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+        }
+
+        input {
+            width: 100%;
+            padding: 14px 18px;
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            font-size: 15px;
+            font-family: 'DM Sans', sans-serif;
+            outline: none;
+            background: var(--light);
+            transition: 0.2s;
+        }
+
+        input:focus {
+            border-color: var(--blue);
+            background: white;
+        }
+
+        .btn-pay {
+            width: 100%;
+            padding: 16px;
+            background: var(--blue);
+            color: white;
+            border: none;
+            border-radius: 14px;
+            font-family: 'Syne', sans-serif;
+            font-weight: 700;
+            font-size: 16px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .btn-pay:hover {
+            background: #3435d4;
+            transform: translateY(-1px);
+        }
+
+        #pin-screen,
+        #receipt-overlay {
+            position: fixed;
+            inset: 0;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+            background: rgba(244, 246, 251, 0.97);
+            backdrop-filter: blur(10px);
+        }
+
+        .pin-box {
+            background: white;
+            border-radius: 28px;
+            padding: 50px 60px;
+            text-align: center;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.12);
+            max-width: 400px;
+            width: 90%;
+        }
+
+        .pin-box h3 {
+            font-family: 'Syne', sans-serif;
+            font-size: 26px;
+            color: var(--text);
+            margin-bottom: 8px;
+        }
+
+        .pin-box p {
+            color: var(--muted);
+            margin-bottom: 25px;
+            font-size: 14px;
+        }
+
+        .pin-dots {
+            display: flex;
+            gap: 18px;
+            justify-content: center;
+            margin: 0 0 30px;
+        }
+
+        .dot {
+            width: 16px;
+            height: 16px;
+            border: 2px solid #ddd;
+            border-radius: 50%;
+            transition: 0.2s;
+        }
+
+        .dot.active {
+            background: var(--blue);
+            border-color: var(--blue);
+        }
+
+        .numpad {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 14px;
+            max-width: 260px;
+            margin: 0 auto;
+        }
+
+        .num-btn {
+            width: 75px;
+            height: 75px;
+            border-radius: 50%;
+            border: none;
+            background: var(--light);
+            font-size: 22px;
+            font-weight: 700;
+            font-family: 'Syne', sans-serif;
+            cursor: pointer;
+            transition: 0.15s;
+        }
+
+        .num-btn:hover {
+            background: var(--border);
+        }
+
+        .num-btn:active {
+            transform: scale(0.92);
+        }
+
+        .receipt-box {
+            background: white;
+            border-radius: 28px;
+            padding: 50px 60px;
+            text-align: center;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.12);
+            max-width: 420px;
+            width: 90%;
+        }
+
+        .receipt-check {
+            font-size: 70px;
+            color: var(--success);
+            margin-bottom: 10px;
+        }
+
+        .receipt-amt {
+            font-family: 'Syne', sans-serif;
+            font-size: 36px;
+            font-weight: 800;
+            color: var(--blue);
+            margin: 10px 0;
+        }
+
+        .receipt-table {
+            width: 100%;
+            border-top: 1px solid var(--border);
+            margin: 25px 0;
+            padding-top: 20px;
+        }
+
+        .receipt-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 14px;
+            font-size: 14px;
+        }
+
+        .receipt-row span:last-child {
+            font-weight: 600;
+            color: var(--text);
+        }
+
+        .toast {
+            position: fixed;
+            bottom: -80px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 14px 28px;
+            border-radius: 30px;
+            color: white;
+            font-weight: 500;
+            font-size: 14px;
+            transition: 0.4s;
+            z-index: 9999;
+            white-space: nowrap;
+        }
+
+        .toast.show {
+            bottom: 30px;
+        }
+
+        /* ══════════════════════════════════════
+           RESPONSIVE — TABLETTE  (≤ 1024px)
+        ══════════════════════════════════════ */
+        @media screen and (max-width: 1024px) {
+            .content {
+                grid-template-columns: 1fr;
+                padding: 24px 28px;
+            }
+
+            .sidebar {
+                width: 240px;
+                padding: 30px 22px;
+            }
+        }
+
+        /* ══════════════════════════════════════
+           RESPONSIVE — MOBILE  (≤ 640px)
+        ══════════════════════════════════════ */
+        @media screen and (max-width: 640px) {
+            body {
+                flex-direction: column;
+            }
+
+            .sidebar {
+                display: none;
+            }
+
+            .main {
+                padding-bottom: 0;
+            }
+
+            .topbar {
+                padding: 14px 16px;
+            }
+
+            .topbar h1 {
+                font-size: 18px;
+            }
+
+            .back-btn {
+                font-size: 15px;
+            }
+
+            .content {
+                grid-template-columns: 1fr;
+                padding: 16px;
+                gap: 18px;
+            }
+
+            .panel {
+                padding: 20px 16px;
+                border-radius: 16px;
+            }
+
+            .services-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 10px;
+            }
+
+            .service-item {
+                padding: 14px 8px;
+                font-size: 11px;
+            }
+
+            .service-item span {
+                font-size: 20px;
+            }
+
+            .btn-pay {
+                padding: 14px;
+                font-size: 15px;
+            }
+
+            input {
+                padding: 12px 14px;
+                font-size: 14px;
+            }
+
+            /* PIN screen & receipt adapt on mobile */
+            .pin-box {
+                padding: 36px 28px;
+            }
+
+            .numpad {
+                max-width: 240px;
+            }
+
+            .num-btn {
+                width: 65px;
+                height: 65px;
+                font-size: 20px;
+            }
+
+            .receipt-box {
+                padding: 36px 28px;
+            }
+
+            .receipt-amt {
+                font-size: 28px;
+            }
+
+            .toast {
+                max-width: 90vw;
+                white-space: normal;
+                text-align: center;
+                font-size: 12px;
+            }
+        }
     </style>
 </head>
-<body>
-    <div class="card">
-        <div id="alert"></div>
 
-        <div id="main-screen">
-            <div class="header">
-                <button class="back-btn" onclick="location.href='accueil.html'">←</button>
-                <h3 style="margin:0">Services & Paiements</h3>
-            </div>
-            <div class="body">
+<body>
+    <div class="sidebar">
+        <div class="logo">EASY-PAY</div>
+        <nav class="nav-menu">
+            <a href="accueil.html" class="nav-item"><span class="nav-icon">🏠</span>Accueil</a>
+            <div class="nav-item active"><span class="nav-icon">🛒</span>Paiement</div>
+        </nav>
+        <div class="info-card">
+            <h4>💡 Comment payer ?</h4>
+            <p>Scannez le QR code du marchand, ou entrez son code manuellement, puis confirmez avec votre PIN.</p>
+        </div>
+    </div>
+
+    <div class="main">
+        <div class="topbar">
+            <a href="accueil.html" class="back-btn">← Retour</a>
+            <h1>Services & Paiements</h1>
+        </div>
+        <div class="content">
+            <div class="panel">
+                <div class="panel-title">Services rapides</div>
                 <div class="services-grid">
                     <div class="service-item" onclick="selectService('ABC12346')"><span>🥐</span>Boulangerie</div>
                     <div class="service-item" onclick="selectService('RECH-TEL')"><span>📱</span>Crédit Tel</div>
@@ -55,57 +606,77 @@
                     <div class="service-item" onclick="selectService('11223344EA')"><span>💧</span>Eau</div>
                 </div>
                 <div id="reader"></div>
-                <button id="btn-scan" class="scanner-btn" onclick="initScanner()">📷 SCANNER UN CODE QR</button>
-                
+                <button class="scanner-btn" id="btn-scan" onclick="initScanner()">📷 Scanner un code QR</button>
+            </div>
+            <div class="panel">
+                <div class="panel-title">Détails du paiement</div>
                 <div id="shop-info" class="shop-display">
-                    <small style="color:var(--wave-blue)">DESTINATAIRE TROUVÉ</small><br>
+                    <small>Destinataire trouvé</small>
                     <strong id="target-shop"></strong>
                 </div>
-
                 <div class="input-group">
-                    <label>Code Marchand</label>
-                    <input type="text" id="merchant-code" placeholder="Ex: ABC12346" oninput="verifierCode()">
+                    <label>Code Marchand (merchant_fixed_code)</label>
+                    <input type="text" id="merchant-code" placeholder="Ex: ABC12346" oninput="verifierCode()"
+                        style="text-transform:uppercase;">
                 </div>
                 <div class="input-group">
                     <label>Montant (F CFA)</label>
-                    <input type="number" id="amount" placeholder="0">
+                    <input type="number" id="amount" placeholder="0" min="1">
                 </div>
-                <button class="btn-pay" onclick="ouvrirPin()">Confirmer</button>
+                <button class="btn-pay" onclick="ouvrirPin()">Confirmer le paiement →</button>
             </div>
         </div>
+    </div>
 
-        <div id="pin-screen">
+    <div class="toast" id="alert"></div>
+
+    <div id="pin-screen">
+        <div class="pin-box">
             <h3>Code PIN</h3>
-            <div class="pin-dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
+            <p>Confirmez votre identité pour valider le paiement</p>
+            <div class="pin-dots">
+                <div class="dot"></div>
+                <div class="dot"></div>
+                <div class="dot"></div>
+                <div class="dot"></div>
+            </div>
             <div class="numpad">
-                <button class="num-btn" onclick="press('1')">1</button><button class="num-btn" onclick="press('2')">2</button><button class="num-btn" onclick="press('3')">3</button>
-                <button class="num-btn" onclick="press('4')">4</button><button class="num-btn" onclick="press('5')">5</button><button class="num-btn" onclick="press('6')">6</button>
-                <button class="num-btn" onclick="press('7')">7</button><button class="num-btn" onclick="press('8')">8</button><button class="num-btn" onclick="press('9')">9</button>
-                <button class="num-btn" style="background:none" onclick="pinSaisi=''; updateDots()">✕</button>
+                <button class="num-btn" onclick="press('1')">1</button><button class="num-btn"
+                    onclick="press('2')">2</button><button class="num-btn" onclick="press('3')">3</button>
+                <button class="num-btn" onclick="press('4')">4</button><button class="num-btn"
+                    onclick="press('5')">5</button><button class="num-btn" onclick="press('6')">6</button>
+                <button class="num-btn" onclick="press('7')">7</button><button class="num-btn"
+                    onclick="press('8')">8</button><button class="num-btn" onclick="press('9')">9</button>
+                <button class="num-btn" style="background:none;color:var(--danger);font-size:18px;"
+                    onclick="pinSaisi='';updateDots()">✕</button>
                 <button class="num-btn" onclick="press('0')">0</button>
-                <button class="num-btn" style="background:none" onclick="document.getElementById('pin-screen').style.display='none'">←</button>
+                <button class="num-btn" style="background:none;"
+                    onclick="document.getElementById('pin-screen').style.display='none'">←</button>
             </div>
         </div>
+    </div>
 
-        <div id="receipt-overlay">
-            <div style="font-size: 60px; color: var(--success); margin-bottom: 10px;">✓</div>
-            <div style="color: var(--success); font-weight: bold;">Réussi</div>
+    <div id="receipt-overlay">
+        <div class="receipt-box">
+            <div class="receipt-check">✓</div>
+            <div style="color:var(--success);font-weight:700;font-size:16px;">Paiement réussi !</div>
             <div class="receipt-amt" id="rec-amt">0 F</div>
-            <div class="receipt-details">
-                <div class="receipt-row"><span>À</span><span id="rec-dest" style="font-weight:600"></span></div>
+            <div class="receipt-table">
+                <div class="receipt-row"><span>À</span><span id="rec-dest"></span></div>
                 <div class="receipt-row"><span>Date</span><span id="rec-date"></span></div>
-                <div class="receipt-row"><span>ID</span><span id="rec-id"></span></div>
+                <div class="receipt-row"><span>Référence</span><span id="rec-id"></span></div>
             </div>
-            <button class="btn-pay" style="width:80%; background:#f0f2f5; color:#333;" onclick="location.href='accueil.html'">Retour</button>
+            <button class="btn-pay" onclick="location.href='accueil.html'"
+                style="max-width:280px;margin:0 auto;display:block;">Retour à l'accueil</button>
         </div>
     </div>
 
     <script>
-        const API_BASE = 'http://localhost/Projet_easypay/';
+        const API_BASE = 'https://snow-panther-442077.hostingersite.com/';
         let pinSaisi = "";
         let scanner;
         let isProcessing = false;
-        let currentMerchantName = ""; // Stocke le nom trouvé dynamiquement
+        let currentMerchantName = "";
 
         const idUser = parseInt(sessionStorage.getItem('ep_id_user'));
         let solde = parseFloat(sessionStorage.getItem('ep_solde')) || 0;
@@ -120,7 +691,6 @@
             setTimeout(() => a.classList.remove('show'), 2500);
         }
 
-        // --- NOUVELLE FONCTION DYNAMIQUE ---
         async function verifierCode() {
             const code = document.getElementById('merchant-code').value.toUpperCase();
             const info = document.getElementById('shop-info');
@@ -163,9 +733,9 @@
                 document.getElementById('merchant-code').value = text;
                 stopScanner();
                 verifierCode().then(found => {
-                    if (found) { 
-                        notify("Marchand identifié !", false); 
-                        document.getElementById('amount').focus(); 
+                    if (found) {
+                        notify("Marchand identifié !", false);
+                        document.getElementById('amount').focus();
                     } else {
                         notify("QR Code inconnu", true);
                     }
@@ -182,27 +752,23 @@
 
         function selectService(code) {
             document.getElementById('merchant-code').value = code;
-            verifierCode().then(() => {
-                document.getElementById('amount').focus();
-            });
+            verifierCode().then(() => document.getElementById('amount').focus());
         }
 
         function ouvrirPin() {
             const mnt = parseFloat(document.getElementById('amount').value);
-            if (!currentMerchantName) return notify("Veuillez saisir un code marchand valide", true);
-            if (!mnt || mnt <= 0) return notify("Entrez un montant", true);
-            if (mnt > solde) return notify("Solde insuffisant", true);
-            
-            pinSaisi = ""; 
+            const valid = document.getElementById('merchant-code').value && mnt > 0 && currentMerchantName;
+            if (!valid) return notify("Vérifiez le code et le montant !", true);
+            pinSaisi = "";
             updateDots();
             document.getElementById('pin-screen').style.display = 'flex';
         }
 
-        function press(n) {
+        function press(num) {
             if (pinSaisi.length < 4) {
-                pinSaisi += n; 
+                pinSaisi += num;
                 updateDots();
-                if (pinSaisi.length === 4) setTimeout(validerFinal, 300);
+                if (pinSaisi.length === 4) setTimeout(confirmerPaiement, 300);
             }
         }
 
@@ -211,47 +777,60 @@
             dots.forEach((d, i) => d.classList.toggle('active', i < pinSaisi.length));
         }
 
-        async function validerFinal() {
-            if (isProcessing) return;
-            isProcessing = true;
+        async function confirmerPaiement() {
+    if (isProcessing) return; // Éviter les doubles clics
+    
+    const amount = parseFloat(document.getElementById('amount').value);
+    const merchantCode = document.getElementById('merchant-code').value.toUpperCase();
 
-            const mnt = parseFloat(document.getElementById('amount').value);
-            const code = document.getElementById('merchant-code').value.toUpperCase();
+    if (amount > solde) { 
+        notify("Solde insuffisant !", true); 
+        document.getElementById('pin-screen').style.display = 'none';
+        return; 
+    }
 
-            try {
-                const res = await fetch(API_BASE + 'api_paiement.php', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        id_user: idUser,
-                        pin: pinSaisi,
-                        merchant_code: code,
-                        merchant_name: currentMerchantName, // Envoie le nom récupéré dynamiquement
-                        montant: mnt
-                    })
-                });
-                const data = await res.json();
+    isProcessing = true;
 
-                if (data.success) {
-                    solde = data.nouveau_solde;
-                    sessionStorage.setItem('ep_solde', solde);
+    try {
+        const res = await fetch(API_BASE + 'api_paiement.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+                action: 'effectuer_paiement', 
+                id_user: idUser,
+                merchant_code: merchantCode,
+                montant: amount,
+                pin: pinSaisi // Optionnel : vérification du PIN côté serveur
+            })
+        });
 
-                    document.getElementById('rec-amt').innerText = mnt.toLocaleString() + " F CFA";
-                    document.getElementById('rec-dest').innerText = currentMerchantName;
-                    document.getElementById('rec-date').innerText = data.date;
-                    document.getElementById('rec-id').innerText = data.ref;
-                    document.getElementById('receipt-overlay').style.display = 'flex';
-                } else {
-                    notify(data.message || "Erreur lors du paiement", true);
-                    pinSaisi = ""; updateDots();
-                }
-            } catch (e) {
-                notify("Erreur réseau. Vérifiez votre connexion.", true);
-                pinSaisi = ""; updateDots();
-            } finally {
-                isProcessing = false;
-            }
+        const data = await res.json();
+
+        if (data.success) {
+            // Mise à jour locale du solde après confirmation du serveur
+            solde = data.nouveau_solde; 
+            sessionStorage.setItem('ep_solde', solde);
+
+            // Remplissage du reçu avec les vraies infos du serveur
+            document.getElementById('rec-amt').innerText = amount + " F CFA";
+            document.getElementById('rec-dest').innerText = currentMerchantName;
+            document.getElementById('rec-date').innerText = new Date().toLocaleString();
+            document.getElementById('rec-id').innerText = data.transaction_id || "TXN-" + Math.floor(Math.random() * 1e6);
+
+            document.getElementById('pin-screen').style.display = 'none';
+            document.getElementById('receipt-overlay').style.display = 'flex';
+            notify("Paiement effectué !", false);
+        } else {
+            notify(data.message || "Erreur lors du paiement", true);
+            document.getElementById('pin-screen').style.display = 'none';
         }
+    } catch (e) {
+        notify("Erreur de connexion au serveur", true);
+    } finally {
+        isProcessing = false;
+    }
+}
     </script>
 </body>
+
 </html>

@@ -1,109 +1,540 @@
 <!DOCTYPE html>
 <html lang="fr">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>EASY-PAY - Bienvenue</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap"
+        rel="stylesheet">
     <style>
-        :root { --wave-blue: #4c4dfc; --wave-orange: #ff8c00; --text-dark: #2c3e50; --light-gray: #f8f9fa; --danger: #eb4d4b; --success: #2ecc71; }
-        body { margin: 0; font-family: 'Segoe UI', Roboto, sans-serif; background: #f0f2f5; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; }
-        .portal-card { width: 90%; max-width: 380px; height: 620px; background: white; border-radius: 30px; box-shadow: 0 20px 50px rgba(0,0,0,0.1); overflow: hidden; position: relative; display: flex; flex-direction: column; }
-        .portal-header { background: var(--wave-blue); color: white; padding: 35px 20px; text-align: center; z-index: 10; }
-        .portal-header h2 { margin: 0; letter-spacing: 2px; font-size: 24px; }
-        .portal-header p { margin: 5px 0 0; opacity: 0.8; font-size: 14px; }
-        .portal-body { padding: 25px; flex-grow: 1; display: flex; flex-direction: column; position: relative; }
-        .step { display: none; width: 100%; flex-direction: column; animation: fadeIn 0.4s ease-out; height: 100%; }
-        .step.active { display: flex; }
-        .input-group { position: relative; margin-bottom: 20px; width: 100%; text-align: left; }
-        .input-group label { display: block; font-size: 11px; font-weight: 700; color: #888; text-transform: uppercase; margin-bottom: 5px; margin-left: 5px; }
-        input { width: 100%; padding: 14px 18px; border: 2px solid #eee; border-radius: 16px; font-size: 16px; outline: none; transition: 0.3s; box-sizing: border-box; background: var(--light-gray); }
-        input:focus { border-color: var(--wave-blue); background: white; }
-        .btn-action { width: 100%; padding: 18px; background: var(--wave-blue); color: white; border: none; border-radius: 18px; font-weight: bold; cursor: pointer; font-size: 16px; transition: 0.3s; margin-top: 10px; }
-        .btn-action:disabled { opacity: 0.6; cursor: not-allowed; }
-        #toast-msg { position: absolute; top: 10px; left: 20px; right: 20px; padding: 12px; border-radius: 12px; color: white; text-align: center; font-size: 12px; font-weight: 600; transform: translateY(-150%); transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); z-index: 1000; }
-        #toast-msg.show { transform: translateY(0); }
-        .loader { border: 4px solid #f3f3f3; border-top: 4px solid var(--wave-blue); border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin-bottom: 20px; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        .choice-container { display: flex; gap: 15px; margin-top: 20px; }
-        .choice-box { flex: 1; background: var(--light-gray); padding: 25px 15px; border-radius: 20px; display: flex; flex-direction: column; justify-content: center; align-items: center; cursor: pointer; transition: 0.3s; border: 2px solid transparent; text-align: center; }
-        .choice-box:hover { border-color: var(--wave-blue); background: white; }
-        .choice-box span { font-size: 30px; margin-bottom: 10px; }
-        .footer-link { margin-top: 25px; font-size: 14px; color: #666; text-align: center; border: none; background: none; width: 100%; cursor: default; }
-        .footer-link b { color: var(--wave-blue); cursor: pointer; text-decoration: none; }
-        .footer-link b:hover { text-decoration: underline; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        :root {
+            --blue: #4c4dfc;
+            --blue-dark: #3435d4;
+            --orange: #ff8c00;
+            --text: #2c3e50;
+            --muted: #8892a0;
+            --light: #f4f6fb;
+            --danger: #eb4d4b;
+            --success: #2ecc71;
+            --border: #e8ecf2;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background: #0f1117;
+            min-height: 100vh;
+            display: flex;
+            overflow: hidden;
+        }
+
+        .left-panel {
+            width: 45%;
+            background: linear-gradient(145deg, #4c4dfc 0%, #7b5cfa 50%, #3435d4 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 60px 70px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .left-panel::before {
+            content: '';
+            position: absolute;
+            top: -100px;
+            right: -100px;
+            width: 400px;
+            height: 400px;
+            background: rgba(255, 255, 255, 0.06);
+            border-radius: 50%;
+        }
+
+        .left-panel::after {
+            content: '';
+            position: absolute;
+            bottom: -80px;
+            left: -80px;
+            width: 300px;
+            height: 300px;
+            background: rgba(255, 255, 255, 0.04);
+            border-radius: 50%;
+        }
+
+        .logo {
+            font-family: 'Syne', sans-serif;
+            font-weight: 800;
+            font-size: 28px;
+            color: white;
+            letter-spacing: 3px;
+            z-index: 1;
+        }
+
+        .hero-text {
+            z-index: 1;
+        }
+
+        .hero-text h1 {
+            font-family: 'Syne', sans-serif;
+            font-weight: 800;
+            font-size: 52px;
+            color: white;
+            line-height: 1.1;
+            margin-bottom: 20px;
+        }
+
+        .hero-text p {
+            font-size: 17px;
+            color: rgba(255, 255, 255, 0.75);
+            line-height: 1.7;
+            max-width: 360px;
+        }
+
+        .floating-card {
+            background: rgba(255, 255, 255, 0.12);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 25px 30px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            z-index: 1;
+        }
+
+        .floating-card .card-label {
+            font-size: 11px;
+            color: rgba(255, 255, 255, 0.6);
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+        }
+
+        .floating-card .card-value {
+            font-family: 'Syne', sans-serif;
+            font-size: 26px;
+            color: white;
+            font-weight: 700;
+            margin-top: 5px;
+        }
+
+        .floating-card .card-sub {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.5);
+            margin-top: 4px;
+        }
+
+        .right-panel {
+            flex: 1;
+            background: white;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 60px 80px;
+            position: relative;
+        }
+
+        .form-container {
+            width: 100%;
+            max-width: 420px;
+        }
+
+        .step {
+            display: none;
+            flex-direction: column;
+            animation: fadeIn 0.4s ease;
+        }
+
+        .step.active {
+            display: flex;
+        }
+
+        .step-title {
+            font-family: 'Syne', sans-serif;
+            font-size: 30px;
+            font-weight: 700;
+            color: var(--text);
+            margin-bottom: 8px;
+        }
+
+        .step-sub {
+            font-size: 14px;
+            color: var(--muted);
+            margin-bottom: 35px;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        .input-group label {
+            display: block;
+            font-size: 11px;
+            font-weight: 500;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+        }
+
+        input {
+            width: 100%;
+            padding: 15px 20px;
+            border: 2px solid var(--border);
+            border-radius: 14px;
+            font-size: 15px;
+            font-family: 'DM Sans', sans-serif;
+            outline: none;
+            background: var(--light);
+            color: var(--text);
+            transition: 0.2s;
+        }
+
+        input:focus {
+            border-color: var(--blue);
+            background: white;
+        }
+
+        .btn-primary {
+            width: 100%;
+            padding: 17px;
+            background: var(--blue);
+            color: white;
+            border: none;
+            border-radius: 14px;
+            font-family: 'Syne', sans-serif;
+            font-weight: 700;
+            font-size: 16px;
+            cursor: pointer;
+            transition: 0.2s;
+            margin-top: 5px;
+        }
+
+        .btn-primary:hover {
+            background: var(--blue-dark);
+            transform: translateY(-1px);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .choice-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin: 10px 0 25px;
+        }
+
+        .choice-box {
+            background: var(--light);
+            border: 2px solid var(--border);
+            border-radius: 18px;
+            padding: 30px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .choice-box:hover {
+            border-color: var(--blue);
+            background: white;
+            box-shadow: 0 8px 25px rgba(76, 77, 252, 0.1);
+        }
+
+        .choice-box .icon {
+            font-size: 35px;
+            margin-bottom: 12px;
+            display: block;
+        }
+
+        .choice-box b {
+            font-family: 'Syne', sans-serif;
+            font-size: 15px;
+        }
+
+        .choice-box.orange:hover {
+            border-color: var(--orange);
+        }
+
+        .choice-box.orange b {
+            color: var(--orange);
+        }
+
+        .link-btn {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 14px;
+            color: var(--muted);
+        }
+
+        .link-btn b {
+            color: var(--blue);
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        .link-btn b:hover {
+            text-decoration: underline;
+        }
+
+        .toast {
+            position: absolute;
+            top: 25px;
+            left: 50%;
+            transform: translateX(-50%) translateY(-80px);
+            
+            color: white;
+            padding: 12px 25px;
+            border-radius: 30px;
+            font-size: 13px;
+            font-weight: 500;
+            transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            white-space: nowrap;
+            z-index: 1000;
+        }
+
+        .toast.show {
+            transform: translateX(-50%) translateY(0);
+        }
+
+        .loader {
+            width: 45px;
+            height: 45px;
+            border: 3px solid #eee;
+            border-top-color: var(--blue);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(8px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @media (max-width:900px) {
+            body {
+                flex-direction: column;
+                background: var(--blue);
+                overflow: auto;
+            }
+
+            .left-panel {
+                width: 100%;
+                padding: 30px 24px 24px;
+                min-height: auto;
+                flex-shrink: 1;
+            }
+
+            .hero-text h1 {
+                font-size: 28px;
+            }
+
+            .hero-text p {
+                font-size: 14px;
+                max-width: 100%;
+            }
+
+            .floating-card {
+                display: none;
+            }
+
+            /* masqué sur mobile/tablette */
+            .right-panel {
+                border-radius: 24px 24px 0 0;
+                padding: 32px 24px 40px;
+                min-height: 70vh;
+                justify-content: flex-start;
+            }
+
+            .form-container {
+                max-width: 100%;
+            }
+
+            .step-title {
+                font-size: 24px;
+            }
+            }
+
+            /* ══════════════════════════════════════
+           RESPONSIVE — MOBILE  (≤ 480px)
+        ══════════════════════════════════════ */
+        @media (max-width:480px) {
+            .left-panel {
+                padding: 24px 20px 18px;
+            }
+
+            .logo {
+                font-size: 22px;
+            }
+
+            .hero-text h1 {
+                font-size: 22px;
+                margin-bottom: 8px;
+            }
+
+            .hero-text p {
+                font-size: 13px;
+            }
+
+            .right-panel {
+                padding: 28px 18px 36px;
+                border-radius: 20px 20px 0 0;
+            }
+
+            .step-title {
+                font-size: 22px;
+            }
+
+            .choice-grid {
+                gap: 10px;
+            }
+
+            .choice-box {
+                padding: 22px 10px;
+            }
+
+            .choice-box .icon {
+                font-size: 28px;
+            }
+
+            input {
+                padding: 13px 15px;
+                font-size: 14px;
+            }
+
+            .btn-primary {
+                padding: 15px;
+                font-size: 15px;
+            }
+            }
+
+        
+
     </style>
 </head>
-<body>
-    <div class="portal-card">
-        <div id="toast-msg"></div>
-        <div class="portal-header">
-            <h2>EASY-PAY</h2>
-            <p id="header-subtitle">Bienvenue dans votre banque mobile</p>
-        </div>
-        <div class="portal-body">
 
+<body>
+    <div class="left-panel">
+        <div class="logo">EASY-PAY</div>
+        <div class="hero-text">
+            <h1>Paiements simples. Rapides. Sécurisés.</h1>
+            <p>Gérez vos finances du quotidien, payez chez vos marchands préférés et rechargez vos services en quelques
+                secondes.</p>
+        </div>
+        <div class="floating-card">
+            <div class="card-label">Sécurité</div>
+            <div class="card-value">100% Protégé</div>
+            <div class="card-sub">Authentification PIN · Transactions sécurisées</div>
+        </div>
+    </div>
+
+    <div class="right-panel">
+        <div class="toast" id="toast-msg"></div>
+        <div class="form-container">
+
+            <!-- ÉTAPE 1 : Choix -->
             <div id="step-choice" class="step active">
-                <h3 style="text-align: center; margin-bottom: 25px; color: var(--text-dark);">Qui êtes-vous ?</h3>
-                <div class="choice-container">
-                    <div class="choice-box" onclick="goToStep('step-register', 'Identification')">
-                        <span>👤</span>
+                <div class="step-title">Bienvenue 👋</div>
+                <div class="step-sub">Comment souhaitez-vous vous connecter ?</div>
+                <div class="choice-grid">
+                    <div class="choice-box" onclick="goToStep('step-register')">
+                        <span class="icon">👤</span>
                         <b>Client</b>
                     </div>
-                    <div class="choice-box" onclick="location.href='marchand.html'">
-                        <span style="filter: hue-rotate(15deg);">🏪</span>
-                        <b style="color:var(--wave-orange)">Marchand</b>
+                    <div class="choice-box orange" onclick="location.href='marchand.html'">
+                        <span class="icon">🏪</span>
+                        <b>Marchand</b>
                     </div>
                 </div>
-                
-                <div class="footer-link">
-                    Vous n'avez pas de compte ? <br>
-                    <b onclick="goToStep('step-register', 'Nouvelle Inscription')">Créer un compte</b>
+                <div class="link-btn">Pas encore de compte ? <b onclick="goToStep('step-register')">Créer un compte</b>
                 </div>
             </div>
 
-            <div id="step-checking" class="step" style="align-items: center; justify-content: center;">
+            <!-- ÉTAPE 2 : Vérification (loader) -->
+            <div id="step-checking" class="step" style="align-items:center;text-align:center;padding:40px 0;">
                 <div class="loader"></div>
-                <p id="check-text" style="color: #666; font-size: 14px;">Vérification de votre compte...</p>
+                <p style="color:var(--muted);font-size:15px;">Vérification en cours...</p>
             </div>
 
+            <!-- ÉTAPE 3 : Saisie prénom + téléphone -->
             <div id="step-register" class="step">
+                <div class="step-title">Identification</div>
+                <div class="step-sub">Entrez votre prénom et numéro de téléphone</div>
                 <div class="input-group">
                     <label>Prénom</label>
+                    <!-- Stocké en session ep_nom via api_login_client (nom_user) -->
                     <input type="text" id="reg-prenom" placeholder="Votre prénom">
                 </div>
                 <div class="input-group">
                     <label>Téléphone</label>
+                    <!-- Stocké en session ep_telephone → utilisé par pin.html -->
                     <input type="tel" id="reg-phone" placeholder="Ex: 07000000">
                 </div>
-                <button class="btn-action" id="btn-continuer" onclick="validateIdentity()">Continuer</button>
-                <button class="footer-link" style="color: var(--wave-blue); font-weight: bold; cursor: pointer;" onclick="goToStep('step-choice', 'Bienvenue')">Retour</button>
+                <button class="btn-primary" id="btn-continuer" onclick="validateIdentity()">Continuer →</button>
+                <div class="link-btn"><b onclick="goToStep('step-choice')">← Retour</b></div>
             </div>
 
+            <!-- ÉTAPE 4 : Création PIN (nouveau compte) -->
             <div id="step-pin-create" class="step">
-                <p style="text-align:center; font-size:13px; color:#666; margin-bottom:20px;">Nouveau compte détecté. <br>Choisissez un code secret à 4 chiffres.</p>
+                <div class="step-title">Sécurisez votre compte</div>
+                <div class="step-sub">Choisissez un code secret à 4 chiffres.</div>
                 <div class="input-group">
                     <label>Définir le PIN</label>
-                    <input type="password" id="p1" maxlength="4" placeholder="••••" style="text-align:center; font-size: 24px; letter-spacing: 15px;">
+                    <input type="password" id="p1" maxlength="4" placeholder="••••"
+                        style="text-align:center;font-size:26px;letter-spacing:15px;">
                 </div>
                 <div class="input-group">
                     <label>Confirmer le PIN</label>
-                    <input type="password" id="p2" maxlength="4" placeholder="••••" style="text-align:center; font-size: 24px; letter-spacing: 15px;">
+                    <input type="password" id="p2" maxlength="4" placeholder="••••"
+                        style="text-align:center;font-size:26px;letter-spacing:15px;">
                 </div>
-                <button class="btn-action" id="btn-inscrire" onclick="saveUser()">Finaliser l'inscription</button>
+                <button class="btn-primary" id="btn-inscrire" onclick="saveUser()">Finaliser l'inscription</button>
             </div>
 
-            <div id="step-success" class="step" style="align-items: center; text-align: center; justify-content: center;">
-                <div style="font-size: 60px; margin-bottom: 15px;">✨</div>
-                <h3 style="color: var(--text-dark);">Compte activé !</h3>
-                <p style="color: #666; font-size: 14px; margin-bottom: 30px;">Bienvenue dans la famille EASY-PAY.</p>
-                <button class="btn-action" onclick="window.location.href='pin.html'">Se connecter</button>
+            <!-- ÉTAPE 5 : Succès inscription -->
+            <div id="step-success" class="step" style="text-align:center;align-items:center;padding:20px 0;">
+                <div style="font-size:70px;margin-bottom:15px;">✨</div>
+                <div class="step-title">Compte activé !</div>
+                <p style="color:var(--muted);margin-bottom:30px;">Bienvenue dans la famille EASY-PAY.<br>Solde de départ
+                    : <strong>5 000 F</strong></p>
+                <button class="btn-primary" onclick="window.location.href='pin.html'" style="max-width:300px;">Se
+                    connecter maintenant</button>
             </div>
         </div>
     </div>
 
     <script>
-        const API_BASE = 'http://localhost/Projet_easypay/';
+        // ============================================================
+        // ALIGNEMENT AVEC LES APIs :
+        // - api_verifier_telephone.php → POST { telephone }
+        //   Retour : { success: true } si existe, { success: false } si nouveau
+        // - api_inscription.php → POST { nom, telephone, pin }
+        //   Retour : { success, message, client: { id_user, nom_user, solde_user } }
+        //   Règles API : nom >= 2 chars, telephone >= 8 chars, pin = 4 chiffres
+        //   Solde de départ : 5000 F (défini dans api_inscription.php)
+        // ============================================================
+        const API_BASE = 'https://snow-panther-442077.hostingersite.com/';
 
         function showBoxMsg(text, isError = true) {
             const toast = document.getElementById('toast-msg');
@@ -113,60 +544,61 @@
             setTimeout(() => toast.classList.remove('show'), 3000);
         }
 
-        function goToStep(id, subtitle) {
+        function goToStep(id) {
             document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
             document.getElementById(id).classList.add('active');
-            if (subtitle) document.getElementById('header-subtitle').innerText = subtitle;
         }
 
         async function validateIdentity() {
-            const phone  = document.getElementById('reg-phone').value.trim();
+            const phone = document.getElementById('reg-phone').value.trim();
+            const prenom = document.getElementById('reg-prenom').value.trim();
 
-            if (phone.length < 8) {
-                showBoxMsg("Numéro de téléphone invalide.");
-                return;
-            }
+            // Validation minimale côté client (miroir des contraintes API)
+            if (prenom.length < 2) { showBoxMsg("Le prénom doit faire au moins 2 caractères."); return; }
+            if (phone.length < 8) { showBoxMsg("Numéro de téléphone invalide (min 8 chiffres)."); return; }
 
             const btn = document.getElementById('btn-continuer');
             btn.disabled = true;
-            goToStep('step-checking', 'Vérification...');
+            goToStep('step-checking');
 
             try {
                 const res = await fetch(API_BASE + 'api_verifier_telephone.php', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
+                    // API attend : { telephone }
                     body: JSON.stringify({ telephone: phone })
                 });
                 const data = await res.json();
 
+                // Stocker le téléphone pour pin.html
                 sessionStorage.setItem('ep_telephone', phone);
 
                 if (data.success) {
+                    // Client existant → redirection vers saisie PIN
                     showBoxMsg("Compte trouvé ! Redirection...", false);
-                    setTimeout(() => {
-                        window.location.href = 'pin.html';
-                    }, 1200);
+                    setTimeout(() => { window.location.href = 'pin.html'; }, 1200);
                 } else {
-                    goToStep('step-pin-create', 'Sécurité');
+                    // Nouveau client → création PIN
+                    goToStep('step-pin-create');
                 }
             } catch (e) {
-                showBoxMsg("Erreur réseau. Vérifiez WAMP.");
-                goToStep('step-register', 'Erreur');
+                showBoxMsg("Erreur réseau. Vérifiez que WAMP est démarré.");
+                goToStep('step-register');
             } finally {
                 btn.disabled = false;
             }
         }
 
         async function saveUser() {
-            const pin1   = document.getElementById('p1').value;
-            const pin2   = document.getElementById('p2').value;
+            const pin1 = document.getElementById('p1').value;
+            const pin2 = document.getElementById('p2').value;
             const prenom = document.getElementById('reg-prenom').value.trim();
-            const phone  = document.getElementById('reg-phone').value.trim();
+            const phone = document.getElementById('reg-phone').value.trim();
 
-            if (pin1.length !== 4 || pin1 !== pin2) {
-                showBoxMsg("Les codes PIN ne correspondent pas.");
-                return;
-            }
+            // Validations miroir API : pin 4 chiffres, identiques
+            if (pin1.length !== 4) { showBoxMsg("Le PIN doit contenir exactement 4 chiffres."); return; }
+            if (!/^\d{4}$/.test(pin1)) { showBoxMsg("Le PIN ne doit contenir que des chiffres."); return; }
+            if (pin1 !== pin2) { showBoxMsg("Les codes PIN ne correspondent pas."); return; }
 
             const btn = document.getElementById('btn-inscrire');
             btn.disabled = true;
@@ -175,23 +607,28 @@
                 const res = await fetch(API_BASE + 'api_inscription.php', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
+                    // API attend : { nom, telephone, pin }
                     body: JSON.stringify({ nom: prenom, telephone: phone, pin: pin1 })
                 });
                 const data = await res.json();
 
                 if (data.success) {
                     showBoxMsg("Inscription validée !", false);
-                    setTimeout(() => goToStep('step-success', 'Terminé'), 1200);
+                    // Stocker le téléphone pour pin.html
+                    sessionStorage.setItem('ep_telephone', phone);
+                    setTimeout(() => goToStep('step-success'), 1200);
                 } else {
+                    // API retourne message d'erreur précis
                     showBoxMsg(data.message || "Erreur d'inscription.");
-                    goToStep('step-pin-create', 'Sécurité');
+                    goToStep('step-pin-create');
                 }
             } catch (e) {
-                showBoxMsg("Erreur réseau.");
+                showBoxMsg("Erreur réseau. Vérifiez que WAMP est démarré.");
             } finally {
                 btn.disabled = false;
             }
         }
     </script>
 </body>
+
 </html>
