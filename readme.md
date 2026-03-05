@@ -2,7 +2,7 @@
 
 **Lien du projet en ligne** : [https://snow-panther-442077.hostingersite.com/](https://snow-panther-442077.hostingersite.com/)
 
-**Contexte & Problématique** : Dans de nombreux pays émergents, notamment en Afrique, l'accès aux services bancaires traditionnels est limité par des frais élevés et la rareté des terminaux de paiement. [cite_start]**EASY-PAY** répond à la problématique suivante : *Comment favoriser l'inclusion financière et sécuriser les transactions de proximité en transformant chaque smartphone en terminal de paiement dématérialisé ?*[cite: 7].
+**Contexte & Problématique** : Dans de nombreux pays émergents, notamment en Afrique, l'accès aux services bancaires traditionnels est limité par des frais élevés et la rareté des terminaux de paiement. **EASY-PAY** répond à la problématique suivante : *Comment favoriser l'inclusion financière et sécuriser les transactions de proximité en transformant chaque smartphone en terminal de paiement dématérialisé ?*.
 
 ## 🚀 Fonctionnalités
 
