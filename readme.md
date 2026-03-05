@@ -26,4 +26,4 @@
 * **Hébergement** : Solution déployée sur **Hostinger** pour un accès en ligne permanent.
 
 ---
-[cite_start]*Projet réalisé dans le cadre du Bachelor 1 SIN à l'EPSI Paris.* [cite: 2]
+*Projet réalisé dans le cadre du Bachelor 1 SIN à l'EPSI Paris.*
