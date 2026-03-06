@@ -342,6 +342,63 @@
             font-size: 13px;
         }
 
+        /* Zone d'activation (Overlay centré) */
+        #activation-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            backdrop-filter: blur(5px);
+        }
+        
+        .activation-form {
+            background: white;
+            padding: 40px;
+            border-radius: 25px;
+            width: 350px;
+            text-align: center;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+        }
+        
+        .activation-form h2 {
+            color: var(--orange);
+            font-family: 'Syne', sans-serif;
+            margin-bottom: 10px;
+        }
+        
+        .activation-form input {
+            width: 100%;
+            padding: 12px 15px;
+            margin: 10px 0;
+            border: 1px solid #ddd;
+            border-radius: 12px;
+            box-sizing: border-box;
+            font-family: 'DM Sans', sans-serif;
+        }
+        
+        .btn-confirm {
+            background: var(--orange);
+            color: white;
+            border: none;
+            padding: 15px;
+            width: 100%;
+            border-radius: 12px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 15px;
+            font-family: 'Syne', sans-serif;
+        }
+        
+        .btn-confirm:hover {
+            background: var(--orange-dark);
+        }
+
         /* NAV MOBILE BAS */
         .mobile-nav {
             display: none;
@@ -540,7 +597,6 @@
             <div class="content-grid">
                 <div class="panel">
                     <div class="panel-title">Analytique des ventes</div>
-                    <!-- amount = string formaté → nettoyé avant Chart.js -->
                     <canvas id="salesChart" height="200"></canvas>
                 </div>
                 <div class="panel">
@@ -560,17 +616,58 @@
         <div onclick="window.print()"><span class="nav-emoji">🖨</span>Imprimer</div>
     </nav>
 
-    <script>
-        /* api_marchand : { action:'historique', merchant_code }
-           → { success, transactions:[{ client_name, amount (string formaté), date }] }
-           Sessions: ep_marchand_fixed_name, ep_marchand_fixed_code                        */
-        const API_BASE = 'https://snow-panther-442077.hostingersite.com/';
-        let myChart = null;
+    <!-- Activation Overlay -->
+    <div id="activation-overlay">
+        <div class="activation-form">
+            <h2>Activation</h2>
+            <p style="font-size: 13px; color: #666; margin-bottom: 15px;">Configurez votre boutique pour commencer.</p>
+            <input type="text" id="setup-name" placeholder="Nom de la boutique">
+            <input type="text" id="setup-code" placeholder="Identifiant QR (ex: SHOP-01)">
+            <button class="btn-confirm" onclick="saveActivation()">Confirmer l'activation</button>
+        </div>
+    </div>
 
-        window.onload = function () {
+    <script>
+        const API_BASE = 'https://snow-panther-442077.hostingersite.com/api_marchand.php';
+        const idMarchand = sessionStorage.getItem('ep_id_marchand');
+        let myChart = null;
+        let autoRefreshInterval = null;
+
+        window.onload = async function() {
+            if(!idMarchand) { 
+                window.location.href = 'marchand.html'; 
+                return;
+            }
+            
+            document.getElementById('today-date').innerText = new Date().toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' });
+
+            try {
+                const res = await fetch(API_BASE, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'check_config', id_marchand: idMarchand })
+                });
+                const data = await res.json();
+
+                // Logique de détection NULL ou vide
+                const isOk = data.success && data.fixed_name && data.fixed_name !== "NULL" && data.fixed_code && data.fixed_code !== "NULL";
+
+                if (isOk) {
+                    sessionStorage.setItem('ep_marchand_fixed_name', data.fixed_name);
+                    sessionStorage.setItem('ep_marchand_fixed_code', data.fixed_code);
+                    initDashboard();
+                } else {
+                    document.getElementById('activation-overlay').style.display = 'flex';
+                }
+            } catch (e) { 
+                console.error("Erreur Init", e);
+                document.getElementById('activation-overlay').style.display = 'flex';
+            }
+        };
+
+        function initDashboard() {
             const name = sessionStorage.getItem('ep_marchand_fixed_name');
             const code = sessionStorage.getItem('ep_marchand_fixed_code');
-            if (!code) { location.href = 'marchand.html'; return; }
 
             // Laptop sidebar
             document.getElementById('display-name').innerText = name || 'Marchand';
@@ -582,29 +679,45 @@
             document.getElementById('mobile-name').innerText = name || 'Marchand';
             document.getElementById('mobile-code').innerText = 'ID: ' + code;
             document.getElementById('qr-img-mobile').src = qrUrl;
-
-            const now = new Date();
-            document.getElementById('today-date').innerText = now.toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' });
+            
+            // Charger les données
             loadData();
-        };
+            
+            // Rafraîchissement automatique toutes les 10 secondes
+            if (autoRefreshInterval) clearInterval(autoRefreshInterval);
+            autoRefreshInterval = setInterval(loadData, 10000);
+        }
 
         async function loadData() {
             const mCode = sessionStorage.getItem('ep_marchand_fixed_code');
+            if (!mCode) return;
+            
             try {
-                const res = await fetch(API_BASE + 'api_marchand.php', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'historique', merchant_code: mCode }) });
+                const res = await fetch(API_BASE, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'historique', merchant_code: mCode })
+                });
                 const data = await res.json();
-                if (data.success) { renderTransactions(data.transactions); renderChart(data.transactions); }
-            } catch (e) { console.error('Erreur chargement:', e); }
+                if (data.success) { 
+                    renderTransactions(data.transactions); 
+                    renderChart(data.transactions); 
+                }
+            } catch (e) { 
+                console.error('Erreur chargement:', e); 
+            }
         }
 
         function renderTransactions(transactions) {
             const list = document.getElementById('transactions-list');
             if (!transactions || transactions.length === 0) {
                 list.innerHTML = '<p class="empty-state">Aucune transaction.</p>';
-                ['stat-count', 'stat-last'].forEach(id => document.getElementById(id).innerText = '—');
+                document.getElementById('stat-count').innerText = '—';
+                document.getElementById('stat-last').innerText = '—';
                 document.getElementById('total-valeur').innerText = '0 F';
                 return;
             }
+            
             let total = 0;
             list.innerHTML = transactions.map(t => {
                 // amount = string formaté (number_format) → nettoyage pour sommer
@@ -615,28 +728,90 @@
                     <div class="trans-amount">+${t.amount} F</div>
                 </div>`;
             }).join('');
+            
             document.getElementById('total-valeur').innerText = total.toLocaleString() + ' F';
             document.getElementById('stat-count').innerText = transactions.length;
+            
             const lastN = parseFloat(String(transactions[0].amount).replace(/\s/g, '').replace(',', '.')) || 0;
             document.getElementById('stat-last').innerText = lastN.toLocaleString() + ' F';
         }
 
         function renderChart(transactions) {
+            if (!transactions || transactions.length === 0) {
+                if (myChart) myChart.destroy();
+                return;
+            }
+            
             const dataAsc = [...transactions].reverse(); // API retourne DESC → inverser
             const ctx = document.getElementById('salesChart').getContext('2d');
             if (myChart) myChart.destroy();
+            
             const amounts = dataAsc.map(t => parseFloat(String(t.amount).replace(/\s/g, '').replace(',', '.')) || 0);
             myChart = new Chart(ctx, {
                 type: 'line',
                 data: {
                     labels: dataAsc.map(t => t.date.split(' ')[1] || t.date),
-                    datasets: [{ data: amounts, borderColor: '#ff8c00', fill: true, backgroundColor: 'rgba(255,140,0,0.08)', tension: 0.4, borderWidth: 2, pointBackgroundColor: '#ff8c00', pointRadius: 3 }]
+                    datasets: [{ 
+                        data: amounts, 
+                        borderColor: '#ff8c00', 
+                        fill: true, 
+                        backgroundColor: 'rgba(255,140,0,0.08)', 
+                        tension: 0.4, 
+                        borderWidth: 2, 
+                        pointBackgroundColor: '#ff8c00', 
+                        pointRadius: 3 
+                    }]
                 },
-                options: { plugins: { legend: { display: false } }, scales: { x: { grid: { display: false } }, y: { grid: { color: '#f0f2f5' } } } }
+                options: { 
+                    plugins: { legend: { display: false } }, 
+                    scales: { 
+                        x: { grid: { display: false } }, 
+                        y: { grid: { color: '#f0f2f5' } } 
+                    } 
+                }
             });
         }
 
-        function logout() { sessionStorage.clear(); location.href = 'index.html'; }
+        async function saveActivation() {
+            const name = document.getElementById('setup-name').value.trim();
+            const code = document.getElementById('setup-code').value.trim().toUpperCase();
+            
+            if(!name || !code) {
+                alert("Veuillez remplir tous les champs");
+                return;
+            }
+
+            try {
+                const res = await fetch(API_BASE, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        action: 'save_config', 
+                        id_marchand: idMarchand, 
+                        fixed_name: name, 
+                        fixed_code: code 
+                    })
+                });
+                const data = await res.json();
+                if(data.success) {
+                    sessionStorage.setItem('ep_marchand_fixed_name', name);
+                    sessionStorage.setItem('ep_marchand_fixed_code', code);
+                    document.getElementById('activation-overlay').style.display = 'none';
+                    initDashboard();
+                } else {
+                    alert(data.message || "Erreur lors de l'activation");
+                }
+            } catch(e) {
+                alert("Erreur de connexion au serveur");
+                console.error(e);
+            }
+        }
+
+        function logout() { 
+            if (autoRefreshInterval) clearInterval(autoRefreshInterval);
+            sessionStorage.clear(); 
+            window.location.href = 'index.html'; 
+        }
     </script>
 </body>
 
